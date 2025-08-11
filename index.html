@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ServicePro-Management</title>
+    <title>ServicePro-Management Enhanced</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -53,15 +53,54 @@
         .other-badge {
             background: linear-gradient(45deg, #d299c2 0%, #fef9d7 100%);
         }
+        .notification {
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .error-input {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
+        }
+        .success-input {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1) !important;
+        }
+        .tooltip {
+            position: relative;
+        }
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: #1f2937;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+        }
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo, useEffect, useRef } = React;
+        const { useState, useMemo, useEffect, useRef, useCallback } = React;
         
-        // Professional Icon Components
+        // Enhanced Icon Components
         const Plus = ({ className = "w-6 h-6", ...props }) => (
             <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -203,6 +242,102 @@
             </svg>
         );
 
+        const Save = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+            </svg>
+        );
+
+        const X = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        );
+
+        const Info = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        // Enhanced Notification System
+        const NotificationContainer = ({ notifications, removeNotification }) => (
+            <div className="fixed top-4 right-4 z-50 space-y-2 no-print">
+                {notifications.map(notification => (
+                    <div
+                        key={notification.id}
+                        className={`notification max-w-sm p-4 rounded-2xl shadow-lg backdrop-blur-sm ${
+                            notification.type === 'success' 
+                                ? 'bg-green-100 border border-green-200 text-green-800' 
+                                : notification.type === 'error'
+                                ? 'bg-red-100 border border-red-200 text-red-800'
+                                : 'bg-blue-100 border border-blue-200 text-blue-800'
+                        }`}
+                    >
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                {notification.type === 'success' && <CheckCircle className="w-5 h-5" />}
+                                {notification.type === 'error' && <AlertCircle className="w-5 h-5" />}
+                                {notification.type === 'info' && <Info className="w-5 h-5" />}
+                                <div>
+                                    <p className="font-semibold">{notification.title}</p>
+                                    <p className="text-sm opacity-90">{notification.message}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => removeNotification(notification.id)}
+                                className="ml-3 opacity-70 hover:opacity-100"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+
+        // Enhanced Form Input Component
+        const FormInput = ({ 
+            label, 
+            error, 
+            success, 
+            tooltip, 
+            required, 
+            className = "", 
+            ...props 
+        }) => (
+            <div className={className}>
+                <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    {label}
+                    {required && <span className="text-red-500 ml-1">*</span>}
+                    {tooltip && (
+                        <span className="tooltip ml-2">
+                            <Info className="w-4 h-4 text-gray-400 inline" />
+                            <span className="tooltip-text">{tooltip}</span>
+                        </span>
+                    )}
+                </label>
+                <input
+                    className={`w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 transition-all bg-white ${
+                        error 
+                            ? 'error-input' 
+                            : success 
+                            ? 'success-input'
+                            : 'border-gray-200 focus:ring-indigo-500 focus:border-transparent'
+                    }`}
+                    {...props}
+                />
+                {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {error}
+                </p>}
+                {success && <p className="text-green-500 text-sm mt-2 flex items-center gap-1">
+                    <CheckCircle className="w-4 h-4" />
+                    {success}
+                </p>}
+            </div>
+        );
+
         // Category icon mapping
         const getCategoryIcon = (category) => {
             const iconMap = {
@@ -216,7 +351,7 @@
             return iconMap[category] || Briefcase;
         };
 
-        // Data Management Hook
+        // Enhanced Data Management Hook with better error handling
         const useLocalStorage = (key, defaultValue) => {
             const [value, setValue] = useState(() => {
                 try {
@@ -228,20 +363,49 @@
                 }
             });
 
-            const setStoredValue = (newValue) => {
+            const setStoredValue = useCallback((newValue) => {
                 try {
                     setValue(newValue);
                     localStorage.setItem(key, JSON.stringify(newValue));
+                    return true;
                 } catch (error) {
                     console.error(`Error saving ${key} to localStorage:`, error);
+                    return false;
                 }
-            };
+            }, [key]);
 
             return [value, setStoredValue];
         };
 
-        const ProfessionalPaymentSystem = () => {
-            // Current view state
+        // Enhanced validation utilities
+        const validators = {
+            required: (value) => value && value.toString().trim() !== '',
+            email: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+            phone: (value) => /^[\d\s\-\(\)\+]{10,}$/.test(value),
+            number: (value) => !isNaN(parseFloat(value)) && isFinite(value),
+            positiveNumber: (value) => validators.number(value) && parseFloat(value) > 0,
+            minLength: (min) => (value) => value && value.length >= min,
+            maxLength: (max) => (value) => value && value.length <= max
+        };
+
+        const validateForm = (data, rules) => {
+            const errors = {};
+            Object.keys(rules).forEach(field => {
+                const value = data[field];
+                const fieldRules = rules[field];
+                
+                for (const rule of fieldRules) {
+                    if (!rule.validator(value)) {
+                        errors[field] = rule.message;
+                        break;
+                    }
+                }
+            });
+            return errors;
+        };
+
+        const EnhancedProfessionalPaymentSystem = () => {
+            // Enhanced state management
             const [currentView, setCurrentView] = useState('timeline');
             const [quickAction, setQuickAction] = useState(null);
             const [searchTerm, setSearchTerm] = useState('');
@@ -249,24 +413,28 @@
             const [statusFilter, setStatusFilter] = useState('all');
             const [selectedWorker, setSelectedWorker] = useState('all');
             const [confirmDelete, setConfirmDelete] = useState(null);
+            const [editingActivity, setEditingActivity] = useState(null);
+            const [notifications, setNotifications] = useState([]);
+            const [formErrors, setFormErrors] = useState({});
+            const [isLoading, setIsLoading] = useState(false);
 
-            // Persistent data
+            // Enhanced persistent data with better defaults
             const [workers, setWorkers] = useLocalStorage('workers', [
                 { 
                     id: 1, 
                     name: 'Dennis Smaltz', 
                     initials: 'DS',
-                    skills: ['Web Development', 'Coding', 'Graphics Design'],
+                    skills: ['Web Development', 'Coding', 'Graphics Design', 'UI/UX Design'],
                     defaultRate: 25,
                     color: 'bg-gradient-to-br from-orange-500 to-purple-500',
                     phone: '(323) 123-4567',
                     email: 'densmaltz4@gmail.com',
                     joinDate: '2024-01-15',
                     rating: 4.9,
-                    totalEarnings: 2,160,
-                    totalHours: 108,
+                    totalEarnings: 200,
+                    totalHours: 8,
                     isActive: true,
-                    notes: 'Excellent attention to detail, very reliable'
+                    notes: 'Expert web developer with excellent attention to detail and creative design skills'
                 },
                 { 
                     id: 2, 
@@ -291,18 +459,18 @@
                     id: 1,
                     type: 'work_completed',
                     workerId: 1,
-                    title: 'Apartment Deep Clean',
-                    description: 'Kitchen, bathrooms, and living room deep cleaning',
+                    title: 'Website Development & Design',
+                    description: 'Built responsive e-commerce website with custom graphics and mobile optimization',
                     date: '2025-08-10',
                     time: '09:00 AM',
-                    duration: 3,
+                    duration: 8,
                     hourlyRate: 25,
-                    amount: 75,
+                    amount: 200,
                     status: 'paid',
-                    paymentMethod: 'Cash',
-                    location: 'Main apartment',
-                    notes: 'Everything looks amazing! Kitchen sparkles',
-                    category: 'cleaning',
+                    paymentMethod: 'Venmo',
+                    location: 'Remote/Office',
+                    notes: 'Client loves the new design! Site is fully responsive and optimized',
+                    category: 'other',
                     quality: 5,
                     photos: [],
                     invoiceNumber: 'INV-001',
@@ -340,10 +508,12 @@
                 invoicePrefix: 'INV',
                 nextInvoiceNumber: 3,
                 notifications: true,
-                autoBackup: true
+                autoBackup: true,
+                backupFrequency: 'daily',
+                theme: 'light'
             });
 
-            // Form states
+            // Enhanced form states with validation
             const [newActivity, setNewActivity] = useState({
                 workerId: '',
                 title: '',
@@ -354,7 +524,7 @@
                 paymentMethod: 'Cash',
                 category: 'cleaning',
                 quality: 5,
-                scheduledDate: '',
+                scheduledDate: new Date().toISOString().split('T')[0],
                 isRecurring: false,
                 recurringPattern: 'weekly'
             });
@@ -369,15 +539,52 @@
             });
 
             // Constants
-            const locations = ['Main apartment', 'Kitchen', 'Bathroom', 'Living room', 'Bedroom', 'Entryway', 'Office', 'Garage'];
+            const locations = ['Remote/Office', 'Client Location', 'Home Office', 'Co-working Space', 'Main apartment', 'Kitchen', 'Bathroom', 'Living room', 'Bedroom', 'Entryway', 'Office', 'Garage'];
             const paymentMethods = ['Cash', 'Cashapp', 'Venmo', 'PayPal', 'Zelle', 'Check', 'Credit Card'];
             const categories = ['cleaning', 'maintenance', 'delivery', 'assembly', 'organization', 'other'];
 
-            // Helper functions (defined before they're used)
+            // Enhanced notification system
+            const addNotification = useCallback((type, title, message) => {
+                const id = Date.now();
+                setNotifications(prev => [...prev, { id, type, title, message }]);
+                setTimeout(() => {
+                    setNotifications(prev => prev.filter(n => n.id !== id));
+                }, 5000);
+            }, []);
+
+            const removeNotification = useCallback((id) => {
+                setNotifications(prev => prev.filter(n => n.id !== id));
+            }, []);
+
+            // Auto-backup functionality
+            useEffect(() => {
+                if (settings.autoBackup) {
+                    const backupData = () => {
+                        try {
+                            const backup = {
+                                workers,
+                                activities,
+                                expenses,
+                                settings,
+                                timestamp: new Date().toISOString()
+                            };
+                            localStorage.setItem('backup_' + new Date().toDateString(), JSON.stringify(backup));
+                            console.log('Auto-backup completed');
+                        } catch (error) {
+                            console.error('Auto-backup failed:', error);
+                        }
+                    };
+
+                    const interval = setInterval(backupData, 60000); // Backup every minute
+                    return () => clearInterval(interval);
+                }
+            }, [workers, activities, expenses, settings]);
+
+            // Helper functions
             const getMonthlyTrend = (activities) => {
                 const months = {};
                 activities.forEach(activity => {
-                    const month = activity.date.substring(0, 7); // YYYY-MM
+                    const month = activity.date.substring(0, 7);
                     if (!months[month]) months[month] = { earnings: 0, hours: 0 };
                     months[month].earnings += activity.amount || 0;
                     months[month].hours += activity.duration || 0;
@@ -461,274 +668,418 @@
                 };
             }, [activities, workers]);
 
-            // Functions
-            const addWorkSession = () => {
-                if (!newActivity.workerId || !newActivity.title || !newActivity.duration) return;
-
-                const worker = workers.find(w => w.id === parseInt(newActivity.workerId));
-                const hours = parseFloat(newActivity.duration);
-                const rate = newActivity.rate || worker.defaultRate;
-                const amount = hours * rate;
-                const taxAmount = amount * (settings.taxRate / 100);
-
-                const activity = {
-                    id: Date.now(),
-                    type: 'work_completed',
-                    workerId: worker.id,
-                    title: newActivity.title,
-                    description: newActivity.description,
-                    date: newActivity.scheduledDate || new Date().toISOString().split('T')[0],
-                    time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                    duration: hours,
-                    hourlyRate: rate,
-                    amount: amount,
-                    status: 'pending',
-                    paymentMethod: newActivity.paymentMethod,
-                    location: newActivity.location,
-                    category: newActivity.category,
-                    quality: newActivity.quality,
-                    notes: newActivity.description,
-                    invoiceNumber: `${settings.invoicePrefix}-${String(settings.nextInvoiceNumber).padStart(3, '0')}`,
-                    taxAmount: taxAmount,
-                    photos: []
+            // Enhanced form validation
+            const validateActivityForm = (data) => {
+                const rules = {
+                    workerId: [
+                        { validator: validators.required, message: 'Please select a worker' }
+                    ],
+                    title: [
+                        { validator: validators.required, message: 'Title is required' },
+                        { validator: validators.minLength(3), message: 'Title must be at least 3 characters' }
+                    ],
+                    duration: [
+                        { validator: validators.required, message: 'Duration is required' },
+                        { validator: validators.positiveNumber, message: 'Duration must be a positive number' }
+                    ]
                 };
+                return validateForm(data, rules);
+            };
 
-                setActivities([activity, ...activities]);
-                setSettings({...settings, nextInvoiceNumber: settings.nextInvoiceNumber + 1});
-                setNewActivity({
-                    workerId: '',
-                    title: '',
-                    description: '',
-                    duration: '',
-                    rate: 0,
-                    location: '',
-                    paymentMethod: 'Cash',
-                    category: 'cleaning',
-                    quality: 5,
-                    scheduledDate: '',
-                    isRecurring: false,
-                    recurringPattern: 'weekly'
-                });
-                setQuickAction(null);
+            const validateWorkerForm = (data) => {
+                const rules = {
+                    name: [
+                        { validator: validators.required, message: 'Name is required' },
+                        { validator: validators.minLength(2), message: 'Name must be at least 2 characters' }
+                    ],
+                    phone: [
+                        { validator: validators.required, message: 'Phone is required' },
+                        { validator: validators.phone, message: 'Please enter a valid phone number' }
+                    ],
+                    email: [
+                        { validator: (value) => !value || validators.email(value), message: 'Please enter a valid email address' }
+                    ],
+                    defaultRate: [
+                        { validator: validators.positiveNumber, message: 'Rate must be a positive number' }
+                    ]
+                };
+                return validateForm(data, rules);
+            };
+
+            // Enhanced functions with better error handling
+            const addWorkSession = async () => {
+                setIsLoading(true);
+                try {
+                    const errors = validateActivityForm(newActivity);
+                    setFormErrors(errors);
+
+                    if (Object.keys(errors).length > 0) {
+                        addNotification('error', 'Validation Error', 'Please fix the errors in the form');
+                        return;
+                    }
+
+                    const worker = workers.find(w => w.id === parseInt(newActivity.workerId));
+                    const hours = parseFloat(newActivity.duration);
+                    const rate = newActivity.rate || worker.defaultRate;
+                    const amount = hours * rate;
+                    const taxAmount = amount * (settings.taxRate / 100);
+
+                    const activity = {
+                        id: Date.now(),
+                        type: 'work_completed',
+                        workerId: worker.id,
+                        title: newActivity.title.trim(),
+                        description: newActivity.description.trim(),
+                        date: newActivity.scheduledDate || new Date().toISOString().split('T')[0],
+                        time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                        duration: hours,
+                        hourlyRate: rate,
+                        amount: amount,
+                        status: 'pending',
+                        paymentMethod: newActivity.paymentMethod,
+                        location: newActivity.location,
+                        category: newActivity.category,
+                        quality: newActivity.quality,
+                        notes: newActivity.description.trim(),
+                        invoiceNumber: `${settings.invoicePrefix}-${String(settings.nextInvoiceNumber).padStart(3, '0')}`,
+                        taxAmount: taxAmount,
+                        photos: [],
+                        createdAt: new Date().toISOString()
+                    };
+
+                    const success = setActivities([activity, ...activities]);
+                    if (success) {
+                        setSettings({...settings, nextInvoiceNumber: settings.nextInvoiceNumber + 1});
+                        setNewActivity({
+                            workerId: '',
+                            title: '',
+                            description: '',
+                            duration: '',
+                            rate: 0,
+                            location: '',
+                            paymentMethod: 'Cash',
+                            category: 'cleaning',
+                            quality: 5,
+                            scheduledDate: new Date().toISOString().split('T')[0],
+                            isRecurring: false,
+                            recurringPattern: 'weekly'
+                        });
+                        setFormErrors({});
+                        setQuickAction(null);
+                        addNotification('success', 'Work Session Added', `Successfully recorded work session for ${worker.name}`);
+                    } else {
+                        addNotification('error', 'Save Failed', 'Failed to save work session. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error adding work session:', error);
+                    addNotification('error', 'Unexpected Error', 'An unexpected error occurred. Please try again.');
+                } finally {
+                    setIsLoading(false);
+                }
             };
 
             const markAsPaid = (activityId) => {
-                setActivities(activities.map(a => 
-                    a.id === activityId ? { 
-                        ...a, 
-                        status: 'paid', 
-                        paidDate: new Date().toISOString().split('T')[0] 
-                    } : a
-                ));
+                try {
+                    const activity = activities.find(a => a.id === activityId);
+                    const success = setActivities(activities.map(a => 
+                        a.id === activityId ? { 
+                            ...a, 
+                            status: 'paid', 
+                            paidDate: new Date().toISOString().split('T')[0] 
+                        } : a
+                    ));
+
+                    if (success) {
+                        addNotification('success', 'Payment Recorded', `Marked "${activity.title}" as paid`);
+                    } else {
+                        addNotification('error', 'Update Failed', 'Failed to update payment status');
+                    }
+                } catch (error) {
+                    console.error('Error marking as paid:', error);
+                    addNotification('error', 'Unexpected Error', 'Failed to mark as paid');
+                }
             };
 
             const deleteActivity = (activityId) => {
-                setActivities(activities.filter(a => a.id !== activityId));
-                setConfirmDelete(null);
+                try {
+                    const activity = activities.find(a => a.id === activityId);
+                    const success = setActivities(activities.filter(a => a.id !== activityId));
+                    
+                    if (success) {
+                        setConfirmDelete(null);
+                        addNotification('success', 'Activity Deleted', `Deleted "${activity.title}"`);
+                    } else {
+                        addNotification('error', 'Delete Failed', 'Failed to delete activity');
+                    }
+                } catch (error) {
+                    console.error('Error deleting activity:', error);
+                    addNotification('error', 'Unexpected Error', 'Failed to delete activity');
+                }
             };
 
-            const addWorker = () => {
-                if (!newWorker.name || !newWorker.phone) return;
+            const addWorker = async () => {
+                setIsLoading(true);
+                try {
+                    const errors = validateWorkerForm(newWorker);
+                    setFormErrors(errors);
 
-                const getInitials = (name) => {
-                    return name.split(' ').map(n => n[0]).join('').toUpperCase();
-                };
+                    if (Object.keys(errors).length > 0) {
+                        addNotification('error', 'Validation Error', 'Please fix the errors in the form');
+                        return;
+                    }
 
-                const colors = [
-                    'bg-gradient-to-br from-red-500 to-pink-500',
-                    'bg-gradient-to-br from-yellow-500 to-orange-500',
-                    'bg-gradient-to-br from-green-500 to-emerald-500',
-                    'bg-gradient-to-br from-blue-500 to-cyan-500',
-                    'bg-gradient-to-br from-indigo-500 to-purple-500',
-                    'bg-gradient-to-br from-pink-500 to-rose-500'
-                ];
+                    // Check for duplicate names or phone numbers
+                    const existingWorker = workers.find(w => 
+                        w.name.toLowerCase() === newWorker.name.toLowerCase() || 
+                        w.phone === newWorker.phone
+                    );
 
-                const worker = {
-                    id: Date.now(),
-                    name: newWorker.name,
-                    initials: getInitials(newWorker.name),
-                    skills: newWorker.skills.split(',').map(s => s.trim()).filter(s => s),
-                    defaultRate: parseFloat(newWorker.defaultRate) || 20,
-                    color: colors[workers.length % colors.length],
-                    phone: newWorker.phone,
-                    email: newWorker.email,
-                    joinDate: new Date().toISOString().split('T')[0],
-                    rating: 5,
-                    totalEarnings: 0,
-                    totalHours: 0,
-                    isActive: true,
-                    notes: newWorker.notes
-                };
+                    if (existingWorker) {
+                        addNotification('error', 'Duplicate Worker', 'A worker with this name or phone number already exists');
+                        return;
+                    }
 
-                setWorkers([...workers, worker]);
-                setNewWorker({
-                    name: '',
-                    phone: '',
-                    email: '',
-                    skills: '',
-                    defaultRate: 20,
-                    notes: ''
-                });
-                setQuickAction(null);
+                    const getInitials = (name) => {
+                        return name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    };
+
+                    const colors = [
+                        'bg-gradient-to-br from-red-500 to-pink-500',
+                        'bg-gradient-to-br from-yellow-500 to-orange-500',
+                        'bg-gradient-to-br from-green-500 to-emerald-500',
+                        'bg-gradient-to-br from-blue-500 to-cyan-500',
+                        'bg-gradient-to-br from-indigo-500 to-purple-500',
+                        'bg-gradient-to-br from-pink-500 to-rose-500'
+                    ];
+
+                    const worker = {
+                        id: Date.now(),
+                        name: newWorker.name.trim(),
+                        initials: getInitials(newWorker.name.trim()),
+                        skills: newWorker.skills.split(',').map(s => s.trim()).filter(s => s),
+                        defaultRate: parseFloat(newWorker.defaultRate) || 20,
+                        color: colors[workers.length % colors.length],
+                        phone: newWorker.phone.trim(),
+                        email: newWorker.email.trim(),
+                        joinDate: new Date().toISOString().split('T')[0],
+                        rating: 5,
+                        totalEarnings: 0,
+                        totalHours: 0,
+                        isActive: true,
+                        notes: newWorker.notes.trim(),
+                        createdAt: new Date().toISOString()
+                    };
+
+                    const success = setWorkers([...workers, worker]);
+                    if (success) {
+                        setNewWorker({
+                            name: '',
+                            phone: '',
+                            email: '',
+                            skills: '',
+                            defaultRate: 20,
+                            notes: ''
+                        });
+                        setFormErrors({});
+                        setQuickAction(null);
+                        addNotification('success', 'Worker Added', `Successfully added ${worker.name} to your team`);
+                    } else {
+                        addNotification('error', 'Save Failed', 'Failed to save worker. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error adding worker:', error);
+                    addNotification('error', 'Unexpected Error', 'An unexpected error occurred. Please try again.');
+                } finally {
+                    setIsLoading(false);
+                }
             };
 
             const deleteWorker = (workerId) => {
-                // Check if worker has any activities
-                const workerActivities = activities.filter(a => a.workerId === workerId);
-                if (workerActivities.length > 0) {
-                    alert('Cannot delete worker with existing activities. Please remove their activities first.');
-                    return;
+                try {
+                    const workerActivities = activities.filter(a => a.workerId === workerId);
+                    if (workerActivities.length > 0) {
+                        addNotification('error', 'Cannot Delete Worker', 'This worker has existing activities. Please remove their activities first.');
+                        return;
+                    }
+                    
+                    const worker = workers.find(w => w.id === workerId);
+                    const success = setWorkers(workers.filter(w => w.id !== workerId));
+                    
+                    if (success) {
+                        setConfirmDelete(null);
+                        addNotification('success', 'Worker Removed', `Removed ${worker.name} from your team`);
+                    } else {
+                        addNotification('error', 'Delete Failed', 'Failed to remove worker');
+                    }
+                } catch (error) {
+                    console.error('Error deleting worker:', error);
+                    addNotification('error', 'Unexpected Error', 'Failed to remove worker');
                 }
-                
-                setWorkers(workers.filter(w => w.id !== workerId));
-                setConfirmDelete(null);
             };
 
             const exportData = (format) => {
-                const dataToExport = {
-                    activities: filteredActivities,
-                    workers: workers,
-                    analytics: analytics,
-                    exportDate: new Date().toISOString()
-                };
+                try {
+                    const dataToExport = {
+                        activities: filteredActivities,
+                        workers: workers,
+                        analytics: analytics,
+                        exportDate: new Date().toISOString(),
+                        appVersion: '2.0.0'
+                    };
 
-                if (format === 'json') {
-                    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `home-services-data-${new Date().toISOString().split('T')[0]}.json`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                } else if (format === 'csv') {
-                    const csvData = filteredActivities.map(a => {
-                        const worker = workers.find(w => w.id === a.workerId);
-                        return {
-                            Date: a.date,
-                            Worker: worker?.name || 'Unknown',
-                            Title: a.title,
-                            Description: a.description,
-                            Hours: a.duration,
-                            'Hourly Rate': a.hourlyRate,
-                            Amount: a.amount,
-                            Status: a.status,
-                            'Payment Method': a.paymentMethod,
-                            Category: a.category,
-                            Location: a.location
-                        };
-                    });
+                    if (format === 'json') {
+                        const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `home-services-data-${new Date().toISOString().split('T')[0]}.json`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        addNotification('success', 'Export Complete', 'Data exported as JSON file');
+                    } else if (format === 'csv') {
+                        const csvData = filteredActivities.map(a => {
+                            const worker = workers.find(w => w.id === a.workerId);
+                            return {
+                                Date: a.date,
+                                Worker: worker?.name || 'Unknown',
+                                Title: a.title,
+                                Description: a.description,
+                                Hours: a.duration,
+                                'Hourly Rate': a.hourlyRate,
+                                Amount: a.amount,
+                                Status: a.status,
+                                'Payment Method': a.paymentMethod,
+                                Category: a.category,
+                                Location: a.location,
+                                Quality: a.quality,
+                                'Invoice Number': a.invoiceNumber
+                            };
+                        });
 
-                    const headers = Object.keys(csvData[0] || {}).join(',');
-                    const rows = csvData.map(row => Object.values(row).join(','));
-                    const csv = [headers, ...rows].join('\n');
+                        const headers = Object.keys(csvData[0] || {}).join(',');
+                        const rows = csvData.map(row => Object.values(row).map(val => 
+                            typeof val === 'string' && val.includes(',') ? `"${val}"` : val
+                        ).join(','));
+                        const csv = [headers, ...rows].join('\n');
 
-                    const blob = new Blob([csv], { type: 'text/csv' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `home-services-report-${new Date().toISOString().split('T')[0]}.csv`;
-                    a.click();
-                    URL.revokeObjectURL(url);
+                        const blob = new Blob([csv], { type: 'text/csv' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `home-services-report-${new Date().toISOString().split('T')[0]}.csv`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        addNotification('success', 'Export Complete', 'Data exported as CSV file');
+                    }
+                } catch (error) {
+                    console.error('Export error:', error);
+                    addNotification('error', 'Export Failed', 'Failed to export data. Please try again.');
                 }
             };
 
             const generateInvoice = (activity) => {
-                const worker = workers.find(w => w.id === activity.workerId);
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <html>
-                        <head>
-                            <title>Invoice ${activity.invoiceNumber}</title>
-                            <style>
-                                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; color: #333; }
-                                .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; }
-                                .company-name { font-size: 32px; font-weight: bold; color: #4f46e5; margin-bottom: 10px; }
-                                .invoice-title { font-size: 24px; color: #6b7280; }
-                                .invoice-details { margin: 30px 0; }
-                                .detail-row { display: flex; justify-content: space-between; margin: 10px 0; }
-                                .services { margin: 30px 0; }
-                                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                                th { background: #f8fafc; padding: 15px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: 600; }
-                                td { padding: 15px; border-bottom: 1px solid #f3f4f6; }
-                                .total-row { background: #f8fafc; font-weight: bold; }
-                                .footer { margin-top: 50px; text-align: center; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; }
-                            </style>
-                        </head>
-                        <body>
-                            <div class="header">
-                                <div class="company-name">${settings.businessName}</div>
-                                <div class="invoice-title">Service Invoice</div>
-                            </div>
-                            
-                            <div class="invoice-details">
-                                <div class="detail-row">
-                                    <strong>Invoice Number:</strong>
-                                    <span>${activity.invoiceNumber}</span>
+                try {
+                    const worker = workers.find(w => w.id === activity.workerId);
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <html>
+                            <head>
+                                <title>Invoice ${activity.invoiceNumber}</title>
+                                <style>
+                                    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; color: #333; }
+                                    .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; }
+                                    .company-name { font-size: 32px; font-weight: bold; color: #4f46e5; margin-bottom: 10px; }
+                                    .invoice-title { font-size: 24px; color: #6b7280; }
+                                    .invoice-details { margin: 30px 0; }
+                                    .detail-row { display: flex; justify-content: space-between; margin: 10px 0; }
+                                    .services { margin: 30px 0; }
+                                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                                    th { background: #f8fafc; padding: 15px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: 600; }
+                                    td { padding: 15px; border-bottom: 1px solid #f3f4f6; }
+                                    .total-row { background: #f8fafc; font-weight: bold; }
+                                    .footer { margin-top: 50px; text-align: center; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="header">
+                                    <div class="company-name">${settings.businessName}</div>
+                                    <div class="invoice-title">Service Invoice</div>
                                 </div>
-                                <div class="detail-row">
-                                    <strong>Service Date:</strong>
-                                    <span>${activity.date}</span>
+                                
+                                <div class="invoice-details">
+                                    <div class="detail-row">
+                                        <strong>Invoice Number:</strong>
+                                        <span>${activity.invoiceNumber}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Service Date:</strong>
+                                        <span>${activity.date}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Service Provider:</strong>
+                                        <span>${worker?.name || 'Unknown'}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Location:</strong>
+                                        <span>${activity.location}</span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <strong>Payment Method:</strong>
+                                        <span>${activity.paymentMethod}</span>
+                                    </div>
                                 </div>
-                                <div class="detail-row">
-                                    <strong>Service Provider:</strong>
-                                    <span>${worker?.name || 'Unknown'}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong>Location:</strong>
-                                    <span>${activity.location}</span>
-                                </div>
-                                <div class="detail-row">
-                                    <strong>Payment Method:</strong>
-                                    <span>${activity.paymentMethod}</span>
-                                </div>
-                            </div>
 
-                            <div class="services">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Service Description</th>
-                                            <th>Hours</th>
-                                            <th>Rate</th>
-                                            <th>Amount</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <strong>${activity.title}</strong><br>
-                                                <small style="color: #6b7280;">${activity.description}</small>
-                                            </td>
-                                            <td>${activity.duration}</td>
-                                            <td>$${activity.hourlyRate}/hr</td>
-                                            <td>$${activity.amount.toFixed(2)}</td>
-                                        </tr>
-                                        ${activity.taxAmount > 0 ? `
-                                        <tr>
-                                            <td colspan="3"><strong>Tax (${settings.taxRate}%)</strong></td>
-                                            <td>$${activity.taxAmount.toFixed(2)}</td>
-                                        </tr>
-                                        ` : ''}
-                                        <tr class="total-row">
-                                            <td colspan="3"><strong>Total Amount</strong></td>
-                                            <td><strong>$${(activity.amount + (activity.taxAmount || 0)).toFixed(2)}</strong></td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                                <div class="services">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th>Service Description</th>
+                                                <th>Hours</th>
+                                                <th>Rate</th>
+                                                <th>Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <strong>${activity.title}</strong><br>
+                                                    <small style="color: #6b7280;">${activity.description}</small>
+                                                </td>
+                                                <td>${activity.duration}</td>
+                                                <td>$${activity.hourlyRate}/hr</td>
+                                                <td>$${activity.amount.toFixed(2)}</td>
+                                            </tr>
+                                            ${activity.taxAmount > 0 ? `
+                                            <tr>
+                                                <td colspan="3"><strong>Tax (${settings.taxRate}%)</strong></td>
+                                                <td>$${activity.taxAmount.toFixed(2)}</td>
+                                            </tr>
+                                            ` : ''}
+                                            <tr class="total-row">
+                                                <td colspan="3"><strong>Total Amount</strong></td>
+                                                <td><strong>$${(activity.amount + (activity.taxAmount || 0)).toFixed(2)}</strong></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                            <div class="footer">
-                                <p>Thank you for using our professional services!</p>
-                                <p><small>Invoice generated on ${new Date().toLocaleDateString()}</small></p>
-                            </div>
-                        </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.print();
+                                <div class="footer">
+                                    <p>Thank you for using our professional services!</p>
+                                    <p><small>Invoice generated on ${new Date().toLocaleDateString()}</small></p>
+                                </div>
+                            </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
+                    addNotification('info', 'Invoice Generated', `Invoice ${activity.invoiceNumber} ready for printing`);
+                } catch (error) {
+                    console.error('Invoice generation error:', error);
+                    addNotification('error', 'Invoice Failed', 'Failed to generate invoice. Please try again.');
+                }
             };
 
-            // Render different views
+            // Render different views with enhanced components
             const renderContent = () => {
                 switch (currentView) {
                     case 'timeline':
@@ -744,6 +1095,7 @@
                 }
             };
 
+            // Enhanced Timeline View with better grouping and search
             const TimelineView = () => {
                 const groupedActivities = useMemo(() => {
                     const today = new Date().toISOString().split('T')[0];
@@ -770,7 +1122,7 @@
 
                 return (
                     <div className="space-y-8">
-                        {/* Filters */}
+                        {/* Enhanced Filters */}
                         <div className="glass-effect rounded-3xl p-6 card-shadow">
                             <div className="flex flex-wrap gap-4 items-center">
                                 <div className="flex-1 min-w-64">
@@ -778,11 +1130,19 @@
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                                         <input
                                             type="text"
-                                            placeholder="Search activities..."
+                                            placeholder="Search activities, workers, or descriptions..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
                                             className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
                                         />
+                                        {searchTerm && (
+                                            <button
+                                                onClick={() => setSearchTerm('')}
+                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            >
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                                 
@@ -826,6 +1186,32 @@
                                     Export
                                 </button>
                             </div>
+
+                            {/* Quick Stats */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                                <div className="bg-white/60 rounded-xl p-4 text-center">
+                                    <p className="text-sm text-gray-600 font-medium">Showing</p>
+                                    <p className="text-lg font-bold text-gray-900">{filteredActivities.length}</p>
+                                </div>
+                                <div className="bg-white/60 rounded-xl p-4 text-center">
+                                    <p className="text-sm text-gray-600 font-medium">Total Value</p>
+                                    <p className="text-lg font-bold text-gray-900">
+                                        ${filteredActivities.reduce((sum, a) => sum + (a.amount || 0), 0).toFixed(2)}
+                                    </p>
+                                </div>
+                                <div className="bg-white/60 rounded-xl p-4 text-center">
+                                    <p className="text-sm text-gray-600 font-medium">Pending</p>
+                                    <p className="text-lg font-bold text-amber-600">
+                                        ${filteredActivities.filter(a => a.status === 'pending').reduce((sum, a) => sum + (a.amount || 0), 0).toFixed(2)}
+                                    </p>
+                                </div>
+                                <div className="bg-white/60 rounded-xl p-4 text-center">
+                                    <p className="text-sm text-gray-600 font-medium">Paid</p>
+                                    <p className="text-lg font-bold text-green-600">
+                                        ${filteredActivities.filter(a => a.status === 'paid').reduce((sum, a) => sum + (a.amount || 0), 0).toFixed(2)}
+                                    </p>
+                                </div>
+                            </div>
                         </div>
 
                         {/* Timeline */}
@@ -839,7 +1225,7 @@
                                         </div>
                                         <div className="h-px bg-gradient-to-r from-indigo-200 to-transparent flex-1"></div>
                                         <div className="text-sm text-gray-500 font-medium">
-                                            {groupedActivities.today.length} activities
+                                            {groupedActivities.today.length} activities • ${groupedActivities.today.reduce((sum, a) => sum + (a.amount || 0), 0).toFixed(2)}
                                         </div>
                                     </div>
                                     <div className="space-y-4">
@@ -859,7 +1245,7 @@
                                         </div>
                                         <div className="h-px bg-gradient-to-r from-slate-200 to-transparent flex-1"></div>
                                         <div className="text-sm text-gray-500 font-medium">
-                                            {groupedActivities.yesterday.length} activities
+                                            {groupedActivities.yesterday.length} activities • ${groupedActivities.yesterday.reduce((sum, a) => sum + (a.amount || 0), 0).toFixed(2)}
                                         </div>
                                     </div>
                                     <div className="space-y-4">
@@ -879,7 +1265,7 @@
                                         </div>
                                         <div className="h-px bg-gradient-to-r from-gray-200 to-transparent flex-1"></div>
                                         <div className="text-sm text-gray-500 font-medium">
-                                            {groupedActivities.earlier.length} activities
+                                            {groupedActivities.earlier.length} activities • ${groupedActivities.earlier.reduce((sum, a) => sum + (a.amount || 0), 0).toFixed(2)}
                                         </div>
                                     </div>
                                     <div className="space-y-4">
@@ -896,13 +1282,33 @@
                                         <FileText className="w-10 h-10 text-gray-400" />
                                     </div>
                                     <h3 className="text-xl font-semibold text-gray-900 mb-3">No activities found</h3>
-                                    <p className="text-gray-600 mb-8 max-w-md mx-auto">Try adjusting your filters or add a new work session to get started!</p>
-                                    <button
-                                        onClick={() => setQuickAction('work')}
-                                        className="gradient-bg text-white px-8 py-4 rounded-2xl font-semibold hover:shadow-lg transition-all transform hover:scale-105"
-                                    >
-                                        Record Work Session
-                                    </button>
+                                    <p className="text-gray-600 mb-8 max-w-md mx-auto">
+                                        {searchTerm || statusFilter !== 'all' || selectedWorker !== 'all' || dateFilter !== 'all' 
+                                            ? 'Try adjusting your filters to see more results'
+                                            : 'Add a new work session to get started tracking your services!'
+                                        }
+                                    </p>
+                                    <div className="flex gap-4 justify-center">
+                                        {(searchTerm || statusFilter !== 'all' || selectedWorker !== 'all' || dateFilter !== 'all') && (
+                                            <button
+                                                onClick={() => {
+                                                    setSearchTerm('');
+                                                    setStatusFilter('all');
+                                                    setSelectedWorker('all');
+                                                    setDateFilter('all');
+                                                }}
+                                                className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-semibold hover:from-gray-200 hover:to-gray-300 transition-all"
+                                            >
+                                                Clear Filters
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={() => setQuickAction('work')}
+                                            className="gradient-bg text-white px-8 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all transform hover:scale-105"
+                                        >
+                                            Record Work Session
+                                        </button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -910,6 +1316,7 @@
                 );
             };
 
+            // Enhanced Activity Card with better status indicators
             const ActivityCard = ({ activity }) => {
                 const worker = workers.find(w => w.id === activity.workerId);
                 const CategoryIcon = getCategoryIcon(activity.category);
@@ -965,6 +1372,13 @@
                                                 <CategoryIcon className="w-3 h-3" />
                                                 {activity.category}
                                             </span>
+                                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                activity.status === 'paid' 
+                                                    ? 'bg-green-100 text-green-700' 
+                                                    : 'bg-amber-100 text-amber-700'
+                                            }`}>
+                                                {activity.status}
+                                            </span>
                                         </div>
                                         <p className="text-gray-600 mb-1">{activity.description}</p>
                                         <p className="text-sm font-semibold text-indigo-600">{worker?.name || 'Unknown Worker'}</p>
@@ -997,6 +1411,12 @@
                                             {activity.quality}/5
                                         </span>
                                     )}
+                                    {activity.paidDate && (
+                                        <span className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-lg">
+                                            <CheckCircle className="w-4 h-4 text-green-500" />
+                                            Paid {activity.paidDate}
+                                        </span>
+                                    )}
                                 </div>
 
                                 {activity.notes && activity.notes !== activity.description && (
@@ -1022,6 +1442,14 @@
                                     >
                                         <Printer className="w-4 h-4" />
                                         Print Invoice
+                                    </button>
+
+                                    <button
+                                        onClick={() => setEditingActivity(activity)}
+                                        className="bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 px-5 py-2 rounded-xl font-semibold hover:from-blue-200 hover:to-blue-300 transition-all flex items-center gap-2"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                        Edit
                                     </button>
 
                                     <button
@@ -1152,7 +1580,7 @@
                         <div className="flex items-center justify-between mb-8">
                             <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
                                 <User className="w-6 h-6 text-indigo-600" />
-                                Team Members
+                                Team Members ({workers.length} total, {activeWorkers.length} active)
                             </h3>
                             <button
                                 onClick={() => setQuickAction('worker')}
@@ -1203,6 +1631,10 @@
                                                         <Star className="w-4 h-4 text-yellow-500" />
                                                         <span className="font-medium">{workerStats?.rating.toFixed(1) || '5.0'} rating</span>
                                                     </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Calendar className="w-4 h-4 text-gray-400" />
+                                                        <span className="font-medium">Joined {worker.joinDate}</span>
+                                                    </div>
                                                 </div>
 
                                                 <div className="flex flex-wrap gap-2 mb-4">
@@ -1232,6 +1664,18 @@
 
                                                 <div className="flex gap-2 mt-4">
                                                     <button
+                                                        onClick={() => setWorkers(workers.map(w => 
+                                                            w.id === worker.id ? {...w, isActive: !w.isActive} : w
+                                                        ))}
+                                                        className={`px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2 ${
+                                                            worker.isActive 
+                                                                ? 'bg-gradient-to-r from-amber-100 to-amber-200 text-amber-700 hover:from-amber-200 hover:to-amber-300'
+                                                                : 'bg-gradient-to-r from-green-100 to-green-200 text-green-700 hover:from-green-200 hover:to-green-300'
+                                                        }`}
+                                                    >
+                                                        {worker.isActive ? 'Deactivate' : 'Activate'}
+                                                    </button>
+                                                    <button
                                                         onClick={() => setConfirmDelete({ type: 'worker', id: worker.id, name: worker.name })}
                                                         className="bg-gradient-to-r from-red-100 to-red-200 text-red-700 px-4 py-2 rounded-xl font-medium hover:from-red-200 hover:to-red-300 transition-all flex items-center gap-2"
                                                     >
@@ -1258,34 +1702,29 @@
                             Business Settings
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">Business Name</label>
-                                <input
-                                    type="text"
-                                    value={settings.businessName}
-                                    onChange={(e) => setSettings({...settings, businessName: e.target.value})}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">Tax Rate (%)</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={settings.taxRate}
-                                    onChange={(e) => setSettings({...settings, taxRate: parseFloat(e.target.value) || 0})}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">Invoice Prefix</label>
-                                <input
-                                    type="text"
-                                    value={settings.invoicePrefix}
-                                    onChange={(e) => setSettings({...settings, invoicePrefix: e.target.value})}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                />
-                            </div>
+                            <FormInput
+                                label="Business Name"
+                                value={settings.businessName}
+                                onChange={(e) => setSettings({...settings, businessName: e.target.value})}
+                                placeholder="Your Business Name"
+                                tooltip="This appears on invoices and reports"
+                            />
+                            <FormInput
+                                label="Tax Rate (%)"
+                                type="number"
+                                step="0.01"
+                                value={settings.taxRate}
+                                onChange={(e) => setSettings({...settings, taxRate: parseFloat(e.target.value) || 0})}
+                                placeholder="0.00"
+                                tooltip="Default tax rate applied to all services"
+                            />
+                            <FormInput
+                                label="Invoice Prefix"
+                                value={settings.invoicePrefix}
+                                onChange={(e) => setSettings({...settings, invoicePrefix: e.target.value})}
+                                placeholder="INV"
+                                tooltip="Prefix for invoice numbers (e.g., INV-001)"
+                            />
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-3">Currency</label>
                                 <select
@@ -1298,6 +1737,49 @@
                                     <option value="GBP">GBP (£)</option>
                                     <option value="CAD">CAD ($)</option>
                                 </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* App Preferences */}
+                    <div className="glass-effect rounded-3xl p-8 card-shadow">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                            <Bell className="w-6 h-6 text-indigo-600" />
+                            App Preferences
+                        </h3>
+                        <div className="space-y-6">
+                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl">
+                                <div>
+                                    <h4 className="font-semibold text-gray-900">Notifications</h4>
+                                    <p className="text-sm text-gray-600">Get notified about pending payments and updates</p>
+                                </div>
+                                <button
+                                    onClick={() => setSettings({...settings, notifications: !settings.notifications})}
+                                    className={`w-12 h-6 rounded-full transition-all ${
+                                        settings.notifications ? 'bg-indigo-500' : 'bg-gray-300'
+                                    }`}
+                                >
+                                    <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${
+                                        settings.notifications ? 'translate-x-6' : 'translate-x-0.5'
+                                    }`}></div>
+                                </button>
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-white rounded-2xl">
+                                <div>
+                                    <h4 className="font-semibold text-gray-900">Auto Backup</h4>
+                                    <p className="text-sm text-gray-600">Automatically backup your data to browser storage</p>
+                                </div>
+                                <button
+                                    onClick={() => setSettings({...settings, autoBackup: !settings.autoBackup})}
+                                    className={`w-12 h-6 rounded-full transition-all ${
+                                        settings.autoBackup ? 'bg-indigo-500' : 'bg-gray-300'
+                                    }`}
+                                >
+                                    <div className={`w-5 h-5 bg-white rounded-full shadow transition-all ${
+                                        settings.autoBackup ? 'translate-x-6' : 'translate-x-0.5'
+                                    }`}></div>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1353,8 +1835,8 @@
                                 <p className="text-2xl font-bold text-gray-900">{settings.invoicePrefix}-{String(settings.nextInvoiceNumber).padStart(3, '0')}</p>
                             </div>
                             <div className="bg-white rounded-2xl p-6 card-shadow">
-                                <p className="text-sm text-gray-600 font-medium mb-2">Last Updated</p>
-                                <p className="text-2xl font-bold text-gray-900">{new Date().toLocaleDateString()}</p>
+                                <p className="text-sm text-gray-600 font-medium mb-2">App Version</p>
+                                <p className="text-2xl font-bold text-gray-900">2.0.0</p>
                             </div>
                         </div>
                     </div>
@@ -1363,6 +1845,12 @@
 
             return (
                 <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+                    {/* Notifications */}
+                    <NotificationContainer 
+                        notifications={notifications} 
+                        removeNotification={removeNotification} 
+                    />
+
                     {/* Header */}
                     <div className="glass-effect border-b border-white/30 sticky top-0 z-40">
                         <div className="max-w-7xl mx-auto px-6 py-6">
@@ -1375,18 +1863,25 @@
                                         <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
                                             {settings.businessName}
                                         </h1>
-                                        <p className="text-gray-600 font-medium">Professional Home Services Management</p>
+                                        <p className="text-gray-600 font-medium">Professional Home Services Management v2.0</p>
                                     </div>
                                 </div>
                                 
-                                {analytics.pendingEarnings > 0 && (
-                                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200 rounded-2xl px-6 py-3 card-shadow">
-                                        <div className="flex items-center gap-3">
-                                            <Bell className="w-5 h-5 text-amber-600" />
-                                            <span className="font-bold text-amber-800 text-lg">${analytics.pendingEarnings.toFixed(2)} pending</span>
+                                <div className="flex items-center gap-4">
+                                    {analytics.pendingEarnings > 0 && (
+                                        <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200 rounded-2xl px-6 py-3 card-shadow">
+                                            <div className="flex items-center gap-3">
+                                                <Bell className="w-5 h-5 text-amber-600" />
+                                                <span className="font-bold text-amber-800 text-lg">${analytics.pendingEarnings.toFixed(2)} pending</span>
+                                            </div>
                                         </div>
+                                    )}
+
+                                    <div className="bg-white/70 rounded-2xl px-4 py-2 backdrop-blur-sm">
+                                        <div className="text-sm text-gray-600 font-medium">Last saved</div>
+                                        <div className="text-xs text-gray-500">{new Date().toLocaleTimeString()}</div>
                                     </div>
-                                )}
+                                </div>
                             </div>
 
                             {/* Navigation */}
@@ -1418,7 +1913,7 @@
                         {renderContent()}
                     </div>
 
-                    {/* Floating Action Button */}
+                    {/* Enhanced Floating Action Button */}
                     <div className="fixed bottom-8 right-8 z-50 no-print">
                         <div className="relative">
                             {quickAction && (
@@ -1456,7 +1951,7 @@
                         </div>
                     </div>
 
-                    {/* Work Session Modal */}
+                    {/* Enhanced Work Session Modal */}
                     {quickAction === 'work' && (
                         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-3xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto card-shadow-lg">
@@ -1467,7 +1962,13 @@
                                 
                                 <div className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Worker</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                            Worker *
+                                            <span className="tooltip ml-2">
+                                                <Info className="w-4 h-4 text-gray-400 inline" />
+                                                <span className="tooltip-text">Select who performed the work</span>
+                                            </span>
+                                        </label>
                                         <div className="grid grid-cols-1 gap-3">
                                             {activeWorkers.map(worker => (
                                                 <button
@@ -1491,18 +1992,23 @@
                                                 </button>
                                             ))}
                                         </div>
+                                        {formErrors.workerId && (
+                                            <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                                                <AlertCircle className="w-4 h-4" />
+                                                {formErrors.workerId}
+                                            </p>
+                                        )}
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Service Title</label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g., Kitchen deep clean"
-                                            value={newActivity.title}
-                                            onChange={(e) => setNewActivity({...newActivity, title: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                        />
-                                    </div>
+                                    <FormInput
+                                        label="Service Title"
+                                        placeholder="e.g., Kitchen deep clean"
+                                        value={newActivity.title}
+                                        onChange={(e) => setNewActivity({...newActivity, title: e.target.value})}
+                                        error={formErrors.title}
+                                        required
+                                        tooltip="Brief description of the service provided"
+                                    />
 
                                     <div>
                                         <label className="block text-sm font-semibold text-gray-700 mb-3">Description</label>
@@ -1515,40 +2021,47 @@
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Hours</label>
-                                            <input
-                                                type="number"
-                                                step="0.25"
-                                                placeholder="2.5"
-                                                value={newActivity.duration}
-                                                onChange={(e) => setNewActivity({...newActivity, duration: e.target.value})}
-                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Rate/hr</label>
-                                            <input
-                                                type="number"
-                                                placeholder="25"
-                                                value={newActivity.rate}
-                                                onChange={(e) => setNewActivity({...newActivity, rate: parseFloat(e.target.value) || 0})}
-                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                            />
-                                        </div>
+                                        <FormInput
+                                            label="Hours"
+                                            type="number"
+                                            step="0.25"
+                                            placeholder="2.5"
+                                            value={newActivity.duration}
+                                            onChange={(e) => setNewActivity({...newActivity, duration: e.target.value})}
+                                            error={formErrors.duration}
+                                            required
+                                            tooltip="Time spent in decimal hours (e.g., 2.5 for 2 hours 30 minutes)"
+                                        />
+                                        <FormInput
+                                            label="Rate/hr"
+                                            type="number"
+                                            placeholder="25"
+                                            value={newActivity.rate}
+                                            onChange={(e) => setNewActivity({...newActivity, rate: parseFloat(e.target.value) || 0})}
+                                            tooltip="Custom rate for this session (defaults to worker's rate)"
+                                        />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Category</label>
-                                        <select
-                                            value={newActivity.category}
-                                            onChange={(e) => setNewActivity({...newActivity, category: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                        >
-                                            {categories.map(cat => (
-                                                <option key={cat} value={cat} className="capitalize">{cat}</option>
-                                            ))}
-                                        </select>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Category</label>
+                                            <select
+                                                value={newActivity.category}
+                                                onChange={(e) => setNewActivity({...newActivity, category: e.target.value})}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                            >
+                                                {categories.map(cat => (
+                                                    <option key={cat} value={cat} className="capitalize">{cat}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <FormInput
+                                            label="Date"
+                                            type="date"
+                                            value={newActivity.scheduledDate}
+                                            onChange={(e) => setNewActivity({...newActivity, scheduledDate: e.target.value})}
+                                            tooltip="Date the work was performed"
+                                        />
                                     </div>
 
                                     <div>
@@ -1583,17 +2096,15 @@
                                                 ))}
                                             </select>
                                         </div>
-                                        <div>
-                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Quality (1-5)</label>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="5"
-                                                value={newActivity.quality}
-                                                onChange={(e) => setNewActivity({...newActivity, quality: parseInt(e.target.value) || 5})}
-                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                            />
-                                        </div>
+                                        <FormInput
+                                            label="Quality (1-5)"
+                                            type="number"
+                                            min="1"
+                                            max="5"
+                                            value={newActivity.quality}
+                                            onChange={(e) => setNewActivity({...newActivity, quality: parseInt(e.target.value) || 5})}
+                                            tooltip="Rate the quality of work from 1-5 stars"
+                                        />
                                     </div>
 
                                     {newActivity.duration && newActivity.rate && (
@@ -1617,13 +2128,26 @@
                                 <div className="flex gap-4 mt-8">
                                     <button
                                         onClick={addWorkSession}
-                                        disabled={!newActivity.workerId || !newActivity.title || !newActivity.duration}
-                                        className="flex-1 gradient-bg text-white px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={isLoading || !newActivity.workerId || !newActivity.title || !newActivity.duration}
+                                        className="flex-1 gradient-bg text-white px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
-                                        Add Session
+                                        {isLoading ? (
+                                            <>
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                Saving...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="w-5 h-5" />
+                                                Add Session
+                                            </>
+                                        )}
                                     </button>
                                     <button
-                                        onClick={() => setQuickAction(null)}
+                                        onClick={() => {
+                                            setQuickAction(null);
+                                            setFormErrors({});
+                                        }}
                                         className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-bold hover:from-gray-200 hover:to-gray-300 transition-all"
                                     >
                                         Cancel
@@ -1633,7 +2157,7 @@
                         </div>
                     )}
 
-                    {/* Add Worker Modal */}
+                    {/* Enhanced Add Worker Modal */}
                     {quickAction === 'worker' && (
                         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-3xl p-8 w-full max-w-lg card-shadow-lg">
@@ -1643,52 +2167,55 @@
                                 </h3>
                                 
                                 <div className="space-y-6">
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Full Name *</label>
-                                        <input
-                                            type="text"
-                                            placeholder="e.g., Sarah Johnson"
-                                            value={newWorker.name}
-                                            onChange={(e) => setNewWorker({...newWorker, name: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                        />
-                                    </div>
+                                    <FormInput
+                                        label="Full Name"
+                                        placeholder="e.g., Sarah Johnson"
+                                        value={newWorker.name}
+                                        onChange={(e) => setNewWorker({...newWorker, name: e.target.value})}
+                                        error={formErrors.name}
+                                        required
+                                        tooltip="Worker's full name as it should appear on invoices"
+                                    />
+
+                                    <FormInput
+                                        label="Phone Number"
+                                        type="tel"
+                                        placeholder="(555) 123-4567"
+                                        value={newWorker.phone}
+                                        onChange={(e) => setNewWorker({...newWorker, phone: e.target.value})}
+                                        error={formErrors.phone}
+                                        required
+                                        tooltip="Primary contact number for the worker"
+                                    />
+
+                                    <FormInput
+                                        label="Email Address"
+                                        type="email"
+                                        placeholder="sarah@example.com"
+                                        value={newWorker.email}
+                                        onChange={(e) => setNewWorker({...newWorker, email: e.target.value})}
+                                        error={formErrors.email}
+                                        tooltip="Optional email address for communication"
+                                    />
+
+                                    <FormInput
+                                        label="Default Rate ($/hr)"
+                                        type="number"
+                                        placeholder="20"
+                                        value={newWorker.defaultRate}
+                                        onChange={(e) => setNewWorker({...newWorker, defaultRate: e.target.value})}
+                                        error={formErrors.defaultRate}
+                                        tooltip="Default hourly rate for this worker"
+                                    />
 
                                     <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Phone Number *</label>
-                                        <input
-                                            type="tel"
-                                            placeholder="(555) 123-4567"
-                                            value={newWorker.phone}
-                                            onChange={(e) => setNewWorker({...newWorker, phone: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Email</label>
-                                        <input
-                                            type="email"
-                                            placeholder="sarah@example.com"
-                                            value={newWorker.email}
-                                            onChange={(e) => setNewWorker({...newWorker, email: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Default Rate ($/hr)</label>
-                                        <input
-                                            type="number"
-                                            placeholder="20"
-                                            value={newWorker.defaultRate}
-                                            onChange={(e) => setNewWorker({...newWorker, defaultRate: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
-                                        />
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Skills (comma-separated)</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                            Skills
+                                            <span className="tooltip ml-2">
+                                                <Info className="w-4 h-4 text-gray-400 inline" />
+                                                <span className="tooltip-text">Comma-separated list of skills (e.g., Cleaning, Organization, Maintenance)</span>
+                                            </span>
+                                        </label>
                                         <input
                                             type="text"
                                             placeholder="Cleaning, Organization, Maintenance"
@@ -1712,13 +2239,26 @@
                                 <div className="flex gap-4 mt-8">
                                     <button
                                         onClick={addWorker}
-                                        disabled={!newWorker.name || !newWorker.phone}
-                                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={isLoading || !newWorker.name || !newWorker.phone}
+                                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                     >
-                                        Add Worker
+                                        {isLoading ? (
+                                            <>
+                                                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                Adding...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <User className="w-5 h-5" />
+                                                Add Worker
+                                            </>
+                                        )}
                                     </button>
                                     <button
-                                        onClick={() => setQuickAction(null)}
+                                        onClick={() => {
+                                            setQuickAction(null);
+                                            setFormErrors({});
+                                        }}
                                         className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-bold hover:from-gray-200 hover:to-gray-300 transition-all"
                                     >
                                         Cancel
@@ -1728,7 +2268,115 @@
                         </div>
                     )}
 
-                    {/* Confirmation Dialog */}
+                    {/* Enhanced Edit Activity Modal */}
+                    {editingActivity && (
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                            <div className="bg-white rounded-3xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto card-shadow-lg">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                                    <Edit className="w-6 h-6 text-blue-600" />
+                                    Edit Activity
+                                </h3>
+                                
+                                <div className="space-y-6">
+                                    <FormInput
+                                        label="Service Title"
+                                        value={editingActivity.title}
+                                        onChange={(e) => setEditingActivity({...editingActivity, title: e.target.value})}
+                                        required
+                                    />
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Description</label>
+                                        <textarea
+                                            value={editingActivity.description}
+                                            onChange={(e) => setEditingActivity({...editingActivity, description: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none bg-white"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <FormInput
+                                            label="Hours"
+                                            type="number"
+                                            step="0.25"
+                                            value={editingActivity.duration}
+                                            onChange={(e) => setEditingActivity({...editingActivity, duration: parseFloat(e.target.value)})}
+                                            required
+                                        />
+                                        <FormInput
+                                            label="Rate/hr"
+                                            type="number"
+                                            value={editingActivity.hourlyRate}
+                                            onChange={(e) => setEditingActivity({...editingActivity, hourlyRate: parseFloat(e.target.value)})}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Category</label>
+                                            <select
+                                                value={editingActivity.category}
+                                                onChange={(e) => setEditingActivity({...editingActivity, category: e.target.value})}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                            >
+                                                {categories.map(cat => (
+                                                    <option key={cat} value={cat} className="capitalize">{cat}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <FormInput
+                                            label="Quality (1-5)"
+                                            type="number"
+                                            min="1"
+                                            max="5"
+                                            value={editingActivity.quality}
+                                            onChange={(e) => setEditingActivity({...editingActivity, quality: parseInt(e.target.value)})}
+                                        />
+                                    </div>
+
+                                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-6 rounded-2xl">
+                                        <div className="flex justify-between items-center">
+                                            <span className="font-semibold text-gray-700">Updated Total:</span>
+                                            <span className="text-2xl font-bold text-blue-600">
+                                                ${((editingActivity.duration || 0) * (editingActivity.hourlyRate || 0)).toFixed(2)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 mt-8">
+                                    <button
+                                        onClick={() => {
+                                            const updatedActivity = {
+                                                ...editingActivity,
+                                                amount: editingActivity.duration * editingActivity.hourlyRate,
+                                                notes: editingActivity.description
+                                            };
+                                            
+                                            setActivities(activities.map(a => 
+                                                a.id === editingActivity.id ? updatedActivity : a
+                                            ));
+                                            setEditingActivity(null);
+                                            addNotification('success', 'Activity Updated', 'Changes have been saved successfully');
+                                        }}
+                                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
+                                    >
+                                        <Save className="w-5 h-5" />
+                                        Save Changes
+                                    </button>
+                                    <button
+                                        onClick={() => setEditingActivity(null)}
+                                        className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-bold hover:from-gray-200 hover:to-gray-300 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Enhanced Confirmation Dialog */}
                     {confirmDelete && (
                         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                             <div className="bg-white rounded-3xl p-8 w-full max-w-md card-shadow-lg">
@@ -1742,8 +2390,17 @@
                                     <p className="text-gray-600 mb-8">
                                         Are you sure you want to delete <strong>{confirmDelete.name}</strong>? 
                                         {confirmDelete.type === 'worker' && ' This will remove them from your team.'}
-                                        {confirmDelete.type === 'activity' && ' This action cannot be undone.'}
+                                        {confirmDelete.type === 'activity' && ' This action cannot be undone and will remove all associated data.'}
                                     </p>
+                                    
+                                    {confirmDelete.type === 'worker' && (
+                                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6">
+                                            <p className="text-sm text-amber-800">
+                                                <strong>Note:</strong> Make sure this worker has no pending activities before deleting.
+                                            </p>
+                                        </div>
+                                    )}
+                                    
                                     <div className="flex gap-4">
                                         <button
                                             onClick={() => {
@@ -1753,8 +2410,9 @@
                                                     deleteActivity(confirmDelete.id);
                                                 }
                                             }}
-                                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-lg transition-all"
+                                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-lg transition-all flex items-center justify-center gap-2"
                                         >
+                                            <Trash className="w-5 h-5" />
                                             Delete
                                         </button>
                                         <button
@@ -1768,13 +2426,23 @@
                             </div>
                         </div>
                     )}
+
+                    {/* Loading Overlay */}
+                    {isLoading && (
+                        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+                            <div className="bg-white rounded-2xl p-8 flex items-center gap-4 card-shadow-lg">
+                                <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                                <span className="text-gray-700 font-medium">Processing...</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             );
         };
 
-        // Render the app
+        // Render the enhanced app
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<ProfessionalPaymentSystem />);
+        root.render(<EnhancedProfessionalPaymentSystem />);
     </script>
 </body>
 </html>
