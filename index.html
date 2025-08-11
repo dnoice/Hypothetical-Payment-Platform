@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ServicePro-Management</title>
+    <title>ServicePro-Management Enhanced</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -545,6 +545,7 @@
             const [currentView, setCurrentView] = useState('timeline');
             const [quickAction, setQuickAction] = useState(null);
             const [editingActivity, setEditingActivity] = useState(null);
+            const [editingWorker, setEditingWorker] = useState(null);
             const [confirmDelete, setConfirmDelete] = useState(null);
             const [notifications, setNotifications] = useState([]);
             const [formErrors, setFormErrors] = useState({});
@@ -1097,6 +1098,68 @@
                     addNotification('error', 'Unexpected Error', 'Failed to remove worker');
                 }
             }, [workers, activities, addNotification, setWorkers]);
+
+            const updateWorker = useCallback(async () => {
+                if (isLoading) return;
+                
+                setIsLoading(true);
+                try {
+                    const errors = validateWorkerForm(editingWorker);
+                    setFormErrors(errors);
+
+                    if (Object.keys(errors).length > 0) {
+                        addNotification('error', 'Validation Error', 'Please fix the errors in the form');
+                        return;
+                    }
+
+                    // Check for duplicates (excluding current worker)
+                    const existingWorker = workers.find(w => 
+                        w.id !== editingWorker.id && (
+                            w.name.toLowerCase() === editingWorker.name.toLowerCase() || 
+                            w.phone === editingWorker.phone ||
+                            (editingWorker.email && w.email && w.email.toLowerCase() === editingWorker.email.toLowerCase())
+                        )
+                    );
+
+                    if (existingWorker) {
+                        addNotification('error', 'Duplicate Worker', 'A worker with this name, phone, or email already exists');
+                        return;
+                    }
+
+                    const getInitials = (name) => {
+                        return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                    };
+
+                    const updatedWorker = {
+                        ...editingWorker,
+                        name: editingWorker.name.trim(),
+                        initials: getInitials(editingWorker.name.trim()),
+                        skills: editingWorker.skills.split(',').map(s => s.trim()).filter(s => s),
+                        defaultRate: parseFloat(editingWorker.defaultRate) || 25,
+                        phone: editingWorker.phone.trim(),
+                        email: editingWorker.email.trim(),
+                        notes: editingWorker.notes.trim(),
+                        updatedAt: new Date().toISOString()
+                    };
+
+                    const success = setWorkers(workers.map(w => 
+                        w.id === editingWorker.id ? updatedWorker : w
+                    ));
+
+                    if (success) {
+                        setEditingWorker(null);
+                        setFormErrors({});
+                        addNotification('success', 'Worker Updated', `Successfully updated ${updatedWorker.name}'s information`);
+                    } else {
+                        addNotification('error', 'Update Failed', 'Failed to update worker. Please try again.');
+                    }
+                } catch (error) {
+                    console.error('Error updating worker:', error);
+                    addNotification('error', 'Unexpected Error', 'An unexpected error occurred. Please try again.');
+                } finally {
+                    setIsLoading(false);
+                }
+            }, [editingWorker, workers, isLoading, validateWorkerForm, addNotification, setWorkers]);
 
             // Enhanced Export Functionality
             const exportData = useCallback((format) => {
@@ -2038,6 +2101,16 @@
 
                             <div className="flex gap-2 mt-4">
                                 <button
+                                    onClick={() => setEditingWorker({
+                                        ...worker,
+                                        skills: worker.skills.join(', ')
+                                    })}
+                                    className="px-4 py-2 rounded-xl font-medium transition-all flex items-center gap-2 focus-visible:focus bg-gradient-to-r from-blue-100 to-blue-200 text-blue-700 hover:from-blue-200 hover:to-blue-300"
+                                >
+                                    <Edit className="w-4 h-4" />
+                                    Edit
+                                </button>
+                                <button
                                     onClick={() => setWorkers(workers.map(w => 
                                         w.id === worker.id ? {...w, isActive: !w.isActive} : w
                                     ))}
@@ -2770,6 +2843,131 @@
                                         </button>
                                         <button
                                             onClick={() => setEditingActivity(null)}
+                                            className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-bold hover:from-gray-200 hover:to-gray-300 transition-all focus-visible:focus"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Enhanced Edit Worker Modal */}
+                        {editingWorker && (
+                            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                                <div className="bg-white rounded-3xl p-8 w-full max-w-lg card-shadow-lg">
+                                    <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                                        <Edit className="w-6 h-6 text-blue-600" />
+                                        Edit Worker
+                                    </h3>
+                                    
+                                    <div className="space-y-6">
+                                        <FormInput
+                                            label="Full Name"
+                                            placeholder="e.g., Sarah Johnson"
+                                            value={editingWorker.name}
+                                            onChange={(e) => setEditingWorker({...editingWorker, name: e.target.value})}
+                                            error={formErrors.name}
+                                            required
+                                            tooltip="Worker's full name as it should appear on invoices"
+                                        />
+
+                                        <FormInput
+                                            label="Phone Number"
+                                            type="tel"
+                                            placeholder="(555) 123-4567"
+                                            value={editingWorker.phone}
+                                            onChange={(e) => setEditingWorker({...editingWorker, phone: e.target.value})}
+                                            error={formErrors.phone}
+                                            required
+                                            tooltip="Primary contact number for the worker"
+                                        />
+
+                                        <FormInput
+                                            label="Email Address"
+                                            type="email"
+                                            placeholder="sarah@example.com"
+                                            value={editingWorker.email}
+                                            onChange={(e) => setEditingWorker({...editingWorker, email: e.target.value})}
+                                            error={formErrors.email}
+                                            tooltip="Optional email address for communication"
+                                        />
+
+                                        <FormInput
+                                            label="Default Rate ($/hr)"
+                                            type="number"
+                                            min="1"
+                                            max="1000"
+                                            placeholder="25"
+                                            value={editingWorker.defaultRate}
+                                            onChange={(e) => setEditingWorker({...editingWorker, defaultRate: e.target.value})}
+                                            error={formErrors.defaultRate}
+                                            tooltip="Default hourly rate for this worker"
+                                        />
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">
+                                                Skills
+                                                <span className="tooltip ml-2">
+                                                    <Info className="w-4 h-4 text-gray-400 inline" />
+                                                    <span className="tooltip-text">Comma-separated list of skills (e.g., Web Development, Design, Coding)</span>
+                                                </span>
+                                            </label>
+                                            <input
+                                                type="text"
+                                                placeholder="Web Development, Design, Coding"
+                                                value={editingWorker.skills}
+                                                onChange={(e) => setEditingWorker({...editingWorker, skills: e.target.value})}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Notes</label>
+                                            <textarea
+                                                placeholder="Any additional notes about this worker..."
+                                                value={editingWorker.notes}
+                                                onChange={(e) => setEditingWorker({...editingWorker, notes: e.target.value})}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none bg-white focus-visible:focus"
+                                            />
+                                        </div>
+
+                                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-4 rounded-2xl">
+                                            <div className="flex items-center gap-3">
+                                                <Info className="w-5 h-5 text-blue-600" />
+                                                <div>
+                                                    <p className="font-semibold text-blue-800">Worker since {formatDate(editingWorker.joinDate)}</p>
+                                                    <p className="text-sm text-blue-600">
+                                                        Current stats will be preserved after editing
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-4 mt-8">
+                                        <button
+                                            onClick={updateWorker}
+                                            disabled={isLoading || !editingWorker.name || !editingWorker.phone}
+                                            className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 focus-visible:focus"
+                                        >
+                                            {isLoading ? (
+                                                <>
+                                                    <LoadingSpinner size="sm" className="text-white" />
+                                                    Updating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Save className="w-5 h-5" />
+                                                    Save Changes
+                                                </>
+                                            )}
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setEditingWorker(null);
+                                                setFormErrors({});
+                                            }}
                                             className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-bold hover:from-gray-200 hover:to-gray-300 transition-all focus-visible:focus"
                                         >
                                             Cancel
