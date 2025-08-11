@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline Payment Tracker</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+                sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+        
+        // Lucide React icons as simple SVG components
+        const Plus = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+        );
+
+        const Clock = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const CheckCircle = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        );
+
+        const DollarSign = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
+        );
+
+        const User = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+        );
+
+        const Calendar = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+        );
+
+        const Home = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+        );
+
+        const Coffee = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h1a4 4 0 110 8h-1M3 8h11v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM7 8V6a2 2 0 012-2h2a2 2 0 012 2v2" />
+            </svg>
+        );
+
+        const Sparkles = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l1.5 1.5L5 6l1.5 1.5L5 9l1.5 1.5L5 12l1.5 1.5L5 15l1.5 1.5L5 18l1.5 1.5L5 21M19 3l-1.5 1.5L19 6l-1.5 1.5L19 9l-1.5 1.5L19 12l-1.5 1.5L19 15l-1.5 1.5L19 18l-1.5 1.5L19 21" />
+            </svg>
+        );
+
+        const Star = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+        );
+
+        const MapPin = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+
+        const TimelinePaymentSystem = () => {
+            const [workers] = useState([
+                { 
+                    id: 1, 
+                    name: 'Maria', 
+                    avatar: '👩‍🦱',
+                    skills: ['✨ Cleaning', '📦 Organization'],
+                    defaultRate: 25,
+                    color: 'from-pink-400 to-rose-500'
+                },
+                { 
+                    id: 2, 
+                    name: 'James', 
+                    avatar: '👨‍🔧',
+                    skills: ['🚚 Delivery', '🔧 Repairs'],
+                    defaultRate: 20,
+                    color: 'from-blue-400 to-indigo-500'
+                },
+            ]);
+
+            const [activities, setActivities] = useState([
+                {
+                    id: 1,
+                    type: 'work_completed',
+                    workerId: 1,
+                    worker: { id: 1, name: 'Maria', avatar: '👩‍🦱', color: 'from-pink-400 to-rose-500' },
+                    title: 'Apartment Deep Clean',
+                    description: 'Kitchen, bathrooms, and living room',
+                    date: '2025-08-10',
+                    time: '09:00 AM',
+                    duration: '3 hours',
+                    amount: 75,
+                    status: 'paid',
+                    paymentMethod: 'Cash',
+                    mood: '😊',
+                    location: '🏠 Main apartment',
+                    notes: 'Everything looks amazing! Kitchen sparkles ✨'
+                },
+                {
+                    id: 2,
+                    type: 'worker_added',
+                    workerId: 2,
+                    worker: { id: 2, name: 'James', avatar: '👨‍🔧', color: 'from-blue-400 to-indigo-500' },
+                    title: 'James joined the team',
+                    description: 'Available for deliveries and maintenance',
+                    date: '2025-08-09',
+                    time: '02:00 PM',
+                    mood: '👋'
+                },
+                {
+                    id: 3,
+                    type: 'payment_pending',
+                    workerId: 1,
+                    worker: { id: 1, name: 'Maria', avatar: '👩‍🦱', color: 'from-pink-400 to-rose-500' },
+                    title: 'Quick tidy-up session',
+                    description: 'Living room organization',
+                    date: '2025-08-11',
+                    time: '10:30 AM',
+                    duration: '1.5 hours',
+                    amount: 37.50,
+                    status: 'pending',
+                    paymentMethod: 'Venmo',
+                    mood: '📝',
+                    location: '🛋️ Living room'
+                }
+            ]);
+
+            const [quickAction, setQuickAction] = useState(null);
+            const [newActivity, setNewActivity] = useState({
+                workerId: '',
+                title: '',
+                description: '',
+                duration: '',
+                rate: 0,
+                location: '',
+                mood: '😊',
+                paymentMethod: 'Cash'
+            });
+
+            const locations = ['🏠 Main apartment', '🍳 Kitchen', '🛁 Bathroom', '🛋️ Living room', '🛏️ Bedroom', '🚪 Entryway'];
+            const moods = ['😊', '✨', '💪', '🎯', '☕', '🌟', '👍', '🎉'];
+            const paymentMethods = ['Cash', 'Venmo', 'PayPal', 'Zelle'];
+
+            const pendingPayments = useMemo(() => 
+                activities.filter(a => a.status === 'pending' && a.amount), 
+                [activities]
+            );
+
+            const totalPending = useMemo(() => 
+                pendingPayments.reduce((sum, a) => sum + a.amount, 0), 
+                [pendingPayments]
+            );
+
+            const groupedActivities = useMemo(() => {
+                const today = new Date().toISOString().split('T')[0];
+                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                
+                const groups = {
+                    today: [],
+                    yesterday: [],
+                    earlier: []
+                };
+
+                activities.forEach(activity => {
+                    if (activity.date === today) {
+                        groups.today.push(activity);
+                    } else if (activity.date === yesterday) {
+                        groups.yesterday.push(activity);
+                    } else {
+                        groups.earlier.push(activity);
+                    }
+                });
+
+                return groups;
+            }, [activities]);
+
+            const addWorkSession = () => {
+                if (!newActivity.workerId || !newActivity.title || !newActivity.duration) return;
+
+                const worker = workers.find(w => w.id === parseInt(newActivity.workerId));
+                const hours = parseFloat(newActivity.duration);
+                const rate = newActivity.rate || worker.defaultRate;
+                const amount = hours * rate;
+
+                const activity = {
+                    id: Date.now(),
+                    type: 'work_completed',
+                    workerId: worker.id,
+                    worker: worker,
+                    title: newActivity.title,
+                    description: newActivity.description,
+                    date: new Date().toISOString().split('T')[0],
+                    time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                    duration: `${hours} hour${hours !== 1 ? 's' : ''}`,
+                    amount: amount,
+                    status: 'pending',
+                    paymentMethod: newActivity.paymentMethod,
+                    mood: newActivity.mood,
+                    location: newActivity.location,
+                    notes: newActivity.description
+                };
+
+                setActivities([activity, ...activities]);
+                setNewActivity({
+                    workerId: '',
+                    title: '',
+                    description: '',
+                    duration: '',
+                    rate: 0,
+                    location: '',
+                    mood: '😊',
+                    paymentMethod: 'Cash'
+                });
+                setQuickAction(null);
+            };
+
+            const markAsPaid = (activityId) => {
+                setActivities(activities.map(a => 
+                    a.id === activityId ? { ...a, status: 'paid' } : a
+                ));
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
+                    {/* Header */}
+                    <div className="bg-white/80 backdrop-blur-lg border-b border-white/20 sticky top-0 z-40">
+                        <div className="max-w-4xl mx-auto px-6 py-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                                        <Home className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                                            My Home Helper
+                                        </h1>
+                                        <p className="text-gray-600">Your apartment activity timeline</p>
+                                    </div>
+                                </div>
+                                
+                                {totalPending > 0 && (
+                                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200 rounded-2xl px-4 py-2">
+                                        <div className="flex items-center gap-2">
+                                            <DollarSign className="w-4 h-4 text-amber-600" />
+                                            <span className="font-semibold text-amber-800">${totalPending} to pay</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-4xl mx-auto px-6 py-8">
+                        {/* Team Overview */}
+                        <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 mb-8 border border-white/50">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <Star className="w-5 h-5 text-yellow-500" />
+                                Your Team
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {workers.map(worker => (
+                                    <div key={worker.id} className="bg-white/80 rounded-2xl p-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 bg-gradient-to-br ${worker.color} rounded-xl flex items-center justify-center text-white text-lg`}>
+                                                {worker.avatar}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-semibold text-gray-900">{worker.name}</h3>
+                                                <div className="flex gap-1 text-sm">
+                                                    {worker.skills.map((skill, idx) => (
+                                                        <span key={idx}>{skill}</span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Timeline */}
+                        <div className="space-y-8">
+                            {/* Today */}
+                            {groupedActivities.today.length > 0 && (
+                                <div>
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="bg-gradient-to-r from-violet-500 to-purple-600 rounded-full px-4 py-2">
+                                            <span className="text-white font-semibold">Today</span>
+                                        </div>
+                                        <div className="h-px bg-gradient-to-r from-purple-200 to-transparent flex-1"></div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {groupedActivities.today.map(activity => (
+                                            <ActivityCard key={activity.id} activity={activity} onMarkPaid={markAsPaid} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Yesterday */}
+                            {groupedActivities.yesterday.length > 0 && (
+                                <div>
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full px-4 py-2">
+                                            <span className="text-white font-semibold">Yesterday</span>
+                                        </div>
+                                        <div className="h-px bg-gradient-to-r from-blue-200 to-transparent flex-1"></div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {groupedActivities.yesterday.map(activity => (
+                                            <ActivityCard key={activity.id} activity={activity} onMarkPaid={markAsPaid} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Earlier */}
+                            {groupedActivities.earlier.length > 0 && (
+                                <div>
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <div className="bg-gradient-to-r from-gray-400 to-gray-500 rounded-full px-4 py-2">
+                                            <span className="text-white font-semibold">Earlier</span>
+                                        </div>
+                                        <div className="h-px bg-gradient-to-r from-gray-200 to-transparent flex-1"></div>
+                                    </div>
+                                    <div className="space-y-4">
+                                        {groupedActivities.earlier.map(activity => (
+                                            <ActivityCard key={activity.id} activity={activity} onMarkPaid={markAsPaid} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {activities.length === 0 && (
+                                <div className="text-center py-16">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Coffee className="w-8 h-8 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No activities yet</h3>
+                                    <p className="text-gray-600 mb-6">Start by recording your first work session!</p>
+                                    <button
+                                        onClick={() => setQuickAction('work')}
+                                        className="bg-gradient-to-r from-violet-500 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all"
+                                    >
+                                        Record Work Session
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Floating Action Button */}
+                    <div className="fixed bottom-6 right-6 z-50">
+                        <div className="relative">
+                            {quickAction && (
+                                <div className="absolute bottom-16 right-0 bg-white rounded-2xl shadow-xl border border-gray-200 p-1 min-w-48">
+                                    <button
+                                        onClick={() => setQuickAction('work')}
+                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-xl flex items-center gap-3"
+                                    >
+                                        <Sparkles className="w-4 h-4 text-purple-500" />
+                                        Record Work Session
+                                    </button>
+                                    <button
+                                        onClick={() => setQuickAction('payment')}
+                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-xl flex items-center gap-3"
+                                    >
+                                        <DollarSign className="w-4 h-4 text-emerald-500" />
+                                        Quick Payment
+                                    </button>
+                                </div>
+                            )}
+                            
+                            <button
+                                onClick={() => setQuickAction(quickAction ? null : 'menu')}
+                                className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                            >
+                                <Plus className={`w-6 h-6 transition-transform ${quickAction ? 'rotate-45' : ''}`} />
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Work Session Modal */}
+                    {quickAction === 'work' && (
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                            <div className="bg-white rounded-3xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto">
+                                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                                    <Sparkles className="w-5 h-5 text-purple-500" />
+                                    Record Work Session
+                                </h3>
+                                
+                                <div className="space-y-5">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Who did the work?</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {workers.map(worker => (
+                                                <button
+                                                    key={worker.id}
+                                                    onClick={() => setNewActivity({...newActivity, workerId: worker.id, rate: worker.defaultRate})}
+                                                    className={`p-3 rounded-2xl border-2 transition-all ${
+                                                        newActivity.workerId === worker.id
+                                                            ? 'border-purple-300 bg-purple-50'
+                                                            : 'border-gray-200 hover:border-gray-300'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-lg">{worker.avatar}</span>
+                                                        <span className="font-medium">{worker.name}</span>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">What was done?</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g., Kitchen deep clean"
+                                            value={newActivity.title}
+                                            onChange={(e) => setNewActivity({...newActivity, title: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Details (optional)</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Any additional notes..."
+                                            value={newActivity.description}
+                                            onChange={(e) => setNewActivity({...newActivity, description: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Hours</label>
+                                            <input
+                                                type="number"
+                                                step="0.5"
+                                                placeholder="2.5"
+                                                value={newActivity.duration}
+                                                onChange={(e) => setNewActivity({...newActivity, duration: e.target.value})}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Rate/hr</label>
+                                            <input
+                                                type="number"
+                                                placeholder="25"
+                                                value={newActivity.rate}
+                                                onChange={(e) => setNewActivity({...newActivity, rate: parseFloat(e.target.value) || 0})}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {locations.map(location => (
+                                                <button
+                                                    key={location}
+                                                    onClick={() => setNewActivity({...newActivity, location})}
+                                                    className={`p-2 rounded-xl text-sm transition-all ${
+                                                        newActivity.location === location
+                                                            ? 'bg-purple-100 text-purple-700 border-2 border-purple-300'
+                                                            : 'bg-gray-50 text-gray-700 border-2 border-transparent hover:bg-gray-100'
+                                                    }`}
+                                                >
+                                                    {location}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Mood</label>
+                                        <div className="flex gap-2">
+                                            {moods.map(mood => (
+                                                <button
+                                                    key={mood}
+                                                    onClick={() => setNewActivity({...newActivity, mood})}
+                                                    className={`w-10 h-10 rounded-full text-lg transition-all ${
+                                                        newActivity.mood === mood
+                                                            ? 'bg-purple-100 scale-110'
+                                                            : 'hover:bg-gray-100 hover:scale-105'
+                                                    }`}
+                                                >
+                                                    {mood}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                                        <select
+                                            value={newActivity.paymentMethod}
+                                            onChange={(e) => setNewActivity({...newActivity, paymentMethod: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        >
+                                            {paymentMethods.map(method => (
+                                                <option key={method} value={method}>{method}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {newActivity.duration && newActivity.rate && (
+                                        <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 p-4 rounded-2xl">
+                                            <div className="flex justify-between items-center">
+                                                <span className="font-medium text-gray-700">Total Payment:</span>
+                                                <span className="text-2xl font-bold text-emerald-600">
+                                                    ${(parseFloat(newActivity.duration) * newActivity.rate).toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-3 mt-8">
+                                    <button
+                                        onClick={addWorkSession}
+                                        className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all"
+                                    >
+                                        Add to Timeline
+                                    </button>
+                                    <button
+                                        onClick={() => setQuickAction(null)}
+                                        className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-2xl font-semibold hover:bg-gray-200 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const ActivityCard = ({ activity, onMarkPaid }) => {
+            const getStatusColor = () => {
+                if (activity.status === 'paid') return 'from-emerald-400 to-emerald-500';
+                if (activity.status === 'pending') return 'from-amber-400 to-orange-500';
+                return 'from-gray-400 to-gray-500';
+            };
+
+            const getCardStyle = () => {
+                if (activity.status === 'paid') return 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200';
+                if (activity.status === 'pending') return 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200';
+                return 'bg-white/70 border-gray-200';
+            };
+
+            return (
+                <div className={`${getCardStyle()} backdrop-blur-sm rounded-3xl p-6 border transition-all hover:shadow-lg`}>
+                    <div className="flex items-start gap-4">
+                        {/* Avatar & Status */}
+                        <div className="relative">
+                            <div className={`w-12 h-12 bg-gradient-to-br ${activity.worker?.color || 'from-gray-400 to-gray-500'} rounded-2xl flex items-center justify-center text-white text-lg`}>
+                                {activity.worker?.avatar || '👤'}
+                            </div>
+                            <div className={`absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br ${getStatusColor()} rounded-full flex items-center justify-center`}>
+                                {activity.status === 'paid' ? (
+                                    <CheckCircle className="w-3 h-3 text-white" />
+                                ) : (
+                                    <Clock className="w-3 h-3 text-white" />
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1">
+                            <div className="flex items-start justify-between mb-2">
+                                <div>
+                                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                                        {activity.title}
+                                        {activity.mood && <span className="text-lg">{activity.mood}</span>}
+                                    </h3>
+                                    <p className="text-gray-600">{activity.description}</p>
+                                </div>
+                                {activity.amount && (
+                                    <div className="text-right">
+                                        <p className="text-xl font-bold text-gray-900">${activity.amount}</p>
+                                        <p className="text-sm text-gray-500">{activity.paymentMethod}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
+                                <span className="flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />
+                                    {activity.time}
+                                </span>
+                                {activity.duration && (
+                                    <span className="flex items-center gap-1">
+                                        ⏱️ {activity.duration}
+                                    </span>
+                                )}
+                                {activity.location && (
+                                    <span className="flex items-center gap-1">
+                                        <MapPin className="w-4 h-4" />
+                                        {activity.location}
+                                    </span>
+                                )}
+                            </div>
+
+                            {activity.notes && (
+                                <div className="bg-white/50 rounded-2xl p-3 mb-3">
+                                    <p className="text-sm text-gray-700 italic">"{activity.notes}"</p>
+                                </div>
+                            )}
+
+                            {activity.status === 'pending' && activity.amount && (
+                                <button
+                                    onClick={() => onMarkPaid(activity.id)}
+                                    className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2"
+                                >
+                                    <DollarSign className="w-4 h-4" />
+                                    Mark as Paid
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render the app
+        ReactDOM.render(<TimelinePaymentSystem />, document.getElementById('root'));
+    </script>
+</body>
+</html>
