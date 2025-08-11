@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ServicePro-Management Enhanced</title>
+    <title>ServicePro-Management </title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -33,10 +33,87 @@
             .no-print { display: none !important; }
             .print-break { page-break-after: always; }
         }
-        @media (max-width: 768px) {
+        
+        /* Comprehensive Media Queries */
+        @media (max-width: 480px) {
+            /* Small Mobile Phones */
             .mobile-stack { flex-direction: column !important; }
             .mobile-full { width: 100% !important; }
             .mobile-text-sm { font-size: 14px !important; }
+            .mobile-text-xs { font-size: 12px !important; }
+            .mobile-p-4 { padding: 1rem !important; }
+            .mobile-gap-2 { gap: 0.5rem !important; }
+            .mobile-hidden { display: none !important; }
+            .mobile-justify-center { justify-content: center !important; }
+            
+            .glass-effect { margin: 0.5rem; padding: 1rem !important; }
+            .card-shadow { box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1) !important; }
+            
+            h1 { font-size: 1.5rem !important; line-height: 2rem !important; }
+            h2 { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+            h3 { font-size: 1.125rem !important; line-height: 1.5rem !important; }
+            
+            .mobile-grid-1 { grid-template-columns: 1fr !important; }
+            .mobile-text-center { text-align: center !important; }
+        }
+        
+        @media (min-width: 481px) and (max-width: 768px) {
+            /* Large Mobile Phones and Small Tablets */
+            .tablet-stack { flex-direction: column !important; }
+            .tablet-full { width: 100% !important; }
+            .tablet-grid-1 { grid-template-columns: 1fr !important; }
+            .tablet-grid-2 { grid-template-columns: repeat(2, 1fr) !important; }
+            .tablet-p-6 { padding: 1.5rem !important; }
+            .tablet-gap-4 { gap: 1rem !important; }
+            
+            .glass-effect { margin: 1rem; }
+        }
+        
+        @media (min-width: 769px) and (max-width: 1024px) {
+            /* Tablets and Small Laptops */
+            .desktop-grid-2 { grid-template-columns: repeat(2, 1fr) !important; }
+            .desktop-grid-3 { grid-template-columns: repeat(3, 1fr) !important; }
+        }
+        
+        @media (min-width: 1025px) and (max-width: 1440px) {
+            /* Standard Desktop */
+            .large-grid-4 { grid-template-columns: repeat(4, 1fr) !important; }
+        }
+        
+        @media (min-width: 1441px) {
+            /* Large Desktop and Ultra-wide */
+            .xl-container { max-width: 1600px !important; }
+            .xl-grid-5 { grid-template-columns: repeat(5, 1fr) !important; }
+        }
+        
+        /* Orientation-specific styles */
+        @media (orientation: landscape) and (max-height: 500px) {
+            /* Landscape mobile phones */
+            .landscape-compact { padding: 0.5rem !important; }
+            .landscape-text-sm { font-size: 14px !important; }
+            .landscape-h-auto { height: auto !important; }
+        }
+        
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            /* Touch devices */
+            button { min-height: 44px !important; }
+            input, select, textarea { min-height: 44px !important; }
+            .touch-friendly { padding: 0.75rem !important; }
+        }
+        
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .high-dpi-border { border-width: 0.5px !important; }
+        }
+        
+        /* Reduced motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -136,7 +213,7 @@
             VALID_DATE: (value) => !isNaN(new Date(value).getTime())
         };
 
-        // Enhanced Icon Components with consistent sizing
+        //  Icon Components with consistent sizing
         const iconProps = { className: "w-5 h-5", strokeWidth: 2 };
         
         const Plus = memo((props) => (
@@ -370,7 +447,7 @@
 
         const PAYMENT_METHODS = ['Cash', 'Venmo', 'PayPal', 'Zelle', 'Check', 'Credit Card', 'Bank Transfer'];
 
-        // Enhanced Hooks
+        //  Hooks
         const useLocalStorage = (key, defaultValue) => {
             const [value, setValue] = useState(() => {
                 try {
@@ -412,7 +489,7 @@
             return debouncedValue;
         };
 
-        // Enhanced Components
+        //  Components
         const NotificationContainer = memo(({ notifications, removeNotification }) => (
             <div className="fixed top-4 right-4 z-50 space-y-2 no-print">
                 {notifications.map(notification => (
@@ -540,7 +617,7 @@
         };
 
         // Main Application Component
-        const EnhancedProfessionalPaymentSystem = () => {
+        const ProfessionalPaymentSystem = () => {
             // Core State Management
             const [currentView, setCurrentView] = useState('timeline');
             const [quickAction, setQuickAction] = useState(null);
@@ -561,7 +638,7 @@
             // Debounced search for performance
             const debouncedSearchTerm = useDebounce(searchTerm, APP_CONFIG.DEBOUNCE_DELAY);
 
-            // Persistent Data with Enhanced Defaults
+            // Persistent Data with  Defaults
             const [workers, setWorkers] = useLocalStorage('workers', [
                 { 
                     id: 1, 
@@ -661,7 +738,7 @@
                 timeFormat: '12h'
             });
 
-            // Form State with Enhanced Validation
+            // Form State with  Validation
             const [newActivity, setNewActivity] = useState({
                 workerId: '',
                 title: '',
@@ -686,7 +763,7 @@
                 notes: ''
             });
 
-            // Enhanced Notification System
+            //  Notification System
             const addNotification = useCallback((type, title, message) => {
                 const id = generateId();
                 setNotifications(prev => [...prev, { id, type, title, message }]);
@@ -699,7 +776,7 @@
                 setNotifications(prev => prev.filter(n => n.id !== id));
             }, []);
 
-            // Auto-backup with Enhanced Error Handling
+            // Auto-backup with  Error Handling
             useEffect(() => {
                 if (settings.autoBackup) {
                     const backupData = () => {
@@ -729,7 +806,7 @@
                 }
             }, [workers, activities, settings]);
 
-            // Enhanced Analytics with Performance Optimization
+            //  Analytics with Performance Optimization
             const analytics = useMemo(() => {
                 const totalEarnings = activities.reduce((sum, a) => sum + (a.amount || 0), 0);
                 const paidEarnings = activities.filter(a => a.status === 'paid').reduce((sum, a) => sum + (a.amount || 0), 0);
@@ -778,7 +855,7 @@
                 };
             }, [activities, workers]);
 
-            // Enhanced Filtering with Performance Optimization
+            //  Filtering with Performance Optimization
             const filteredActivities = useMemo(() => {
                 return activities.filter(activity => {
                     const worker = workers.find(w => w.id === activity.workerId);
@@ -818,7 +895,7 @@
                 });
             }, [activities, workers, debouncedSearchTerm, statusFilter, selectedWorker, selectedCategory, dateFilter]);
 
-            // Enhanced Form Validation
+            //  Form Validation
             const validateActivityForm = useCallback((data) => {
                 const rules = {
                     workerId: [
@@ -863,7 +940,7 @@
                 return validateForm(data, rules);
             }, []);
 
-            // Enhanced CRUD Operations with Better Error Handling
+            //  CRUD Operations with Better Error Handling
             const addWorkSession = useCallback(async () => {
                 if (isLoading) return;
                 
@@ -1161,7 +1238,7 @@
                 }
             }, [editingWorker, workers, isLoading, validateWorkerForm, addNotification, setWorkers]);
 
-            // Enhanced Export Functionality
+            //  Export Functionality
             const exportData = useCallback((format) => {
                 try {
                     const timestamp = new Date().toISOString().split('T')[0];
@@ -1246,7 +1323,7 @@
                 }
             }, [filteredActivities, workers, analytics, settings, addNotification]);
 
-            // Enhanced Invoice Generation
+            //  Invoice Generation
             const generateInvoice = useCallback((activity) => {
                 try {
                     const worker = workers.find(w => w.id === activity.workerId);
@@ -1449,7 +1526,7 @@
 
             const activeWorkers = useMemo(() => workers.filter(w => w.isActive), [workers]);
 
-            // Enhanced Timeline View Component
+            //  Timeline View Component
             const TimelineView = memo(() => {
                 const groupedActivities = useMemo(() => {
                     const today = new Date().toISOString().split('T')[0];
@@ -1483,9 +1560,9 @@
 
                 return (
                     <div className="space-y-8">
-                        {/* Enhanced Filters */}
-                        <div className="glass-effect rounded-3xl p-6 card-shadow">
-                            <div className="flex flex-wrap gap-4 items-center">
+                        {/*  Filters */}
+                        <div className="glass-effect rounded-3xl p-6 mobile-p-4 card-shadow">
+                            <div className="flex flex-wrap gap-4 mobile-gap-2 items-center">
                                 <div className="flex-1 min-w-64 mobile-full">
                                     <div className="relative">
                                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -1494,13 +1571,13 @@
                                             placeholder="Search activities, workers, or descriptions..."
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value)}
-                                            className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white focus-visible:focus"
+                                            className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white focus-visible:focus touch-friendly"
                                             aria-label="Search activities"
                                         />
                                         {searchTerm && (
                                             <button
                                                 onClick={() => setSearchTerm('')}
-                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus-visible:focus"
+                                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 focus-visible:focus touch-friendly"
                                                 aria-label="Clear search"
                                             >
                                                 <X className="w-4 h-4" />
@@ -1512,7 +1589,7 @@
                                 <select
                                     value={statusFilter}
                                     onChange={(e) => setStatusFilter(e.target.value)}
-                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus"
+                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus touch-friendly mobile-full"
                                     aria-label="Filter by status"
                                 >
                                     <option value="all">All Status</option>
@@ -1523,7 +1600,7 @@
                                 <select
                                     value={selectedWorker}
                                     onChange={(e) => setSelectedWorker(e.target.value)}
-                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus"
+                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus touch-friendly mobile-full"
                                     aria-label="Filter by worker"
                                 >
                                     <option value="all">All Workers</option>
@@ -1535,7 +1612,7 @@
                                 <select
                                     value={selectedCategory}
                                     onChange={(e) => setSelectedCategory(e.target.value)}
-                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus"
+                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus touch-friendly mobile-full"
                                     aria-label="Filter by category"
                                 >
                                     <option value="all">All Categories</option>
@@ -1547,7 +1624,7 @@
                                 <select
                                     value={dateFilter}
                                     onChange={(e) => setDateFilter(e.target.value)}
-                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus"
+                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus touch-friendly mobile-full"
                                     aria-label="Filter by date"
                                 >
                                     <option value="all">All Time</option>
@@ -1559,46 +1636,46 @@
 
                                 <button
                                     onClick={() => exportData('csv')}
-                                    className="px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-2xl hover:from-gray-200 hover:to-gray-300 transition-all flex items-center gap-2 font-medium focus-visible:focus"
+                                    className="px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-2xl hover:from-gray-200 hover:to-gray-300 transition-all flex items-center gap-2 font-medium focus-visible:focus touch-friendly mobile-full mobile-justify-center"
                                     aria-label="Export data"
                                 >
                                     <Download className="w-4 h-4" />
-                                    Export
+                                    <span className="mobile-hidden">Export</span>
                                 </button>
                             </div>
 
                             {/* Quick Stats */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                                <div className="bg-white/60 rounded-xl p-4 text-center">
-                                    <p className="text-sm text-gray-600 font-medium">Showing</p>
-                                    <p className="text-lg font-bold text-gray-900">{filteredActivities.length}</p>
+                            <div className="grid grid-cols-2 md:grid-cols-4 mobile-grid-1 tablet-grid-2 gap-4 mobile-gap-2 mt-6">
+                                <div className="bg-white/60 rounded-xl p-4 mobile-p-4 text-center mobile-text-center">
+                                    <p className="text-sm mobile-text-xs text-gray-600 font-medium">Showing</p>
+                                    <p className="text-lg mobile-text-sm font-bold text-gray-900">{filteredActivities.length}</p>
                                 </div>
-                                <div className="bg-white/60 rounded-xl p-4 text-center">
-                                    <p className="text-sm text-gray-600 font-medium">Total Value</p>
-                                    <p className="text-lg font-bold text-gray-900">
+                                <div className="bg-white/60 rounded-xl p-4 mobile-p-4 text-center mobile-text-center">
+                                    <p className="text-sm mobile-text-xs text-gray-600 font-medium">Total Value</p>
+                                    <p className="text-lg mobile-text-sm font-bold text-gray-900">
                                         {formatCurrency(filteredActivities.reduce((sum, a) => sum + (a.amount || 0), 0))}
                                     </p>
                                 </div>
-                                <div className="bg-white/60 rounded-xl p-4 text-center">
-                                    <p className="text-sm text-gray-600 font-medium">Pending</p>
-                                    <p className="text-lg font-bold text-amber-600">
+                                <div className="bg-white/60 rounded-xl p-4 mobile-p-4 text-center mobile-text-center">
+                                    <p className="text-sm mobile-text-xs text-gray-600 font-medium">Pending</p>
+                                    <p className="text-lg mobile-text-sm font-bold text-amber-600">
                                         {formatCurrency(filteredActivities.filter(a => a.status === 'pending').reduce((sum, a) => sum + (a.amount || 0), 0))}
                                     </p>
                                 </div>
-                                <div className="bg-white/60 rounded-xl p-4 text-center">
-                                    <p className="text-sm text-gray-600 font-medium">Paid</p>
-                                    <p className="text-lg font-bold text-green-600">
+                                <div className="bg-white/60 rounded-xl p-4 mobile-p-4 text-center mobile-text-center">
+                                    <p className="text-sm mobile-text-xs text-gray-600 font-medium">Paid</p>
+                                    <p className="text-lg mobile-text-sm font-bold text-green-600">
                                         {formatCurrency(filteredActivities.filter(a => a.status === 'paid').reduce((sum, a) => sum + (a.amount || 0), 0))}
                                     </p>
                                 </div>
                             </div>
 
                             {hasFilters && (
-                                <div className="mt-4 flex items-center gap-2">
-                                    <span className="text-sm text-gray-600">Filters active:</span>
+                                <div className="mt-4 flex items-center gap-2 mobile-text-center mobile-justify-center">
+                                    <span className="text-sm mobile-text-xs text-gray-600">Filters active:</span>
                                     <button
                                         onClick={clearAllFilters}
-                                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium focus-visible:focus"
+                                        className="text-sm mobile-text-xs text-indigo-600 hover:text-indigo-700 font-medium focus-visible:focus touch-friendly"
                                     >
                                         Clear all filters
                                     </button>
@@ -1693,7 +1770,7 @@
                 </div>
             ));
 
-            // Enhanced Activity Card Component
+            //  Activity Card Component
             const ActivityCard = memo(({ activity }) => {
                 const worker = workers.find(w => w.id === activity.workerId);
                 const categoryInfo = CATEGORIES[activity.category] || CATEGORIES.other;
@@ -1839,9 +1916,9 @@
 
             // Analytics View Component
             const AnalyticsView = memo(() => (
-                <div className="space-y-8">
+                <div className="space-y-8 mobile-gap-2">
                     {/* Summary Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mobile-grid-1 tablet-grid-2 desktop-grid-3 large-grid-4 gap-6 mobile-gap-2">
                         <SummaryCard
                             icon={DollarSign}
                             value={formatCurrency(analytics.totalEarnings)}
@@ -1869,7 +1946,7 @@
                     </div>
 
                     {/* Additional Analytics Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 mobile-grid-1 tablet-grid-2 desktop-grid-3 gap-6 mobile-gap-2">
                         <SummaryCard
                             icon={FileText}
                             value={analytics.projectCount}
@@ -1891,12 +1968,12 @@
                     </div>
 
                     {/* Worker Performance */}
-                    <div className="glass-effect rounded-3xl p-8 card-shadow">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                    <div className="glass-effect rounded-3xl p-6 mobile-p-4 card-shadow">
+                        <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
                             <User className="w-6 h-6 text-indigo-600" />
                             Worker Performance
                         </h3>
-                        <div className="space-y-6">
+                        <div className="space-y-6 mobile-gap-2">
                             {analytics.workerStats.map(worker => (
                                 <WorkerPerformanceCard key={worker.id} worker={worker} />
                             ))}
@@ -1904,12 +1981,12 @@
                     </div>
 
                     {/* Category Breakdown */}
-                    <div className="glass-effect rounded-3xl p-8 card-shadow">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                    <div className="glass-effect rounded-3xl p-6 mobile-p-4 card-shadow">
+                        <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
                             <BarChart className="w-6 h-6 text-indigo-600" />
                             Service Categories
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mobile-grid-1 tablet-grid-2 desktop-grid-3 gap-6 mobile-gap-2">
                             {analytics.categoryBreakdown.map(({ category, label, count, earnings, hours }) => (
                                 <CategoryCard 
                                     key={category} 
@@ -1997,7 +2074,7 @@
                 );
             });
 
-            // Workers View Component (Similar enhanced pattern as above)
+            // Workers View Component (Similar  pattern as above)
             const WorkersView = memo(() => (
                 <div className="space-y-8">
                     <div className="glass-effect rounded-3xl p-8 card-shadow">
@@ -2135,137 +2212,195 @@
                 </div>
             ));
 
-            // Settings View Component
-            const SettingsView = memo(() => (
-                <div className="space-y-8">
-                    {/* Business Settings */}
-                    <div className="glass-effect rounded-3xl p-8 card-shadow">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-                            <Settings className="w-6 h-6 text-indigo-600" />
-                            Business Settings
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <FormInput
-                                label="Business Name"
-                                value={settings.businessName}
-                                onChange={(e) => setSettings({...settings, businessName: e.target.value})}
-                                placeholder="Your Business Name"
-                                tooltip="This appears on invoices and reports"
-                            />
-                            <FormInput
-                                label="Tax Rate (%)"
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                max="100"
-                                value={settings.taxRate}
-                                onChange={(e) => setSettings({...settings, taxRate: parseFloat(e.target.value) || 0})}
-                                placeholder="0.00"
-                                tooltip="Default tax rate applied to all services"
-                            />
-                            <FormInput
-                                label="Invoice Prefix"
-                                value={settings.invoicePrefix}
-                                onChange={(e) => setSettings({...settings, invoicePrefix: e.target.value.toUpperCase()})}
-                                placeholder="INV"
-                                tooltip="Prefix for invoice numbers (e.g., INV-001)"
-                            />
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-3">Currency</label>
-                                <select
-                                    value={settings.currency}
-                                    onChange={(e) => setSettings({...settings, currency: e.target.value})}
-                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus"
+            // Settings View Component with Local State Management
+            const SettingsView = memo(() => {
+                // Local state for settings to prevent keyboard dismissal
+                const [localSettings, setLocalSettings] = useState(settings);
+                const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+                // Update local settings and track changes
+                const updateLocalSetting = useCallback((key, value) => {
+                    setLocalSettings(prev => ({ ...prev, [key]: value }));
+                    setHasUnsavedChanges(true);
+                }, []);
+
+                // Save settings function
+                const saveSettings = useCallback(() => {
+                    setSettings(localSettings);
+                    setHasUnsavedChanges(false);
+                    addNotification('success', 'Settings Saved', 'Your settings have been updated successfully');
+                }, [localSettings, setSettings, addNotification]);
+
+                // Reset settings function
+                const resetSettings = useCallback(() => {
+                    setLocalSettings(settings);
+                    setHasUnsavedChanges(false);
+                }, [settings]);
+
+                // Auto-save on component unmount or view change
+                useEffect(() => {
+                    return () => {
+                        if (hasUnsavedChanges) {
+                            setSettings(localSettings);
+                        }
+                    };
+                }, [hasUnsavedChanges, localSettings, setSettings]);
+
+                return (
+                    <div className="space-y-8">
+                        {/* Unsaved Changes Banner */}
+                        {hasUnsavedChanges && (
+                            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-2xl p-4 flex items-center justify-between card-shadow">
+                                <div className="flex items-center gap-3">
+                                    <AlertCircle className="w-5 h-5 text-amber-600" />
+                                    <span className="font-medium text-amber-800">You have unsaved changes</span>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={saveSettings}
+                                        className="bg-amber-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-amber-700 transition-colors focus-visible:focus"
+                                    >
+                                        Save Changes
+                                    </button>
+                                    <button
+                                        onClick={resetSettings}
+                                        className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition-colors focus-visible:focus"
+                                    >
+                                        Discard
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Business Settings */}
+                        <div className="glass-effect rounded-3xl p-6 mobile-p-4 card-shadow">
+                            <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
+                                <Settings className="w-6 h-6 text-indigo-600" />
+                                Business Settings
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 mobile-grid-1 tablet-grid-2 gap-6 mobile-gap-2">
+                                <FormInput
+                                    label="Business Name"
+                                    value={localSettings.businessName}
+                                    onChange={(e) => updateLocalSetting('businessName', e.target.value)}
+                                    placeholder="Your Business Name"
+                                    tooltip="This appears on invoices and reports"
+                                />
+                                <FormInput
+                                    label="Tax Rate (%)"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    max="100"
+                                    value={localSettings.taxRate}
+                                    onChange={(e) => updateLocalSetting('taxRate', parseFloat(e.target.value) || 0)}
+                                    placeholder="0.00"
+                                    tooltip="Default tax rate applied to all services"
+                                />
+                                <FormInput
+                                    label="Invoice Prefix"
+                                    value={localSettings.invoicePrefix}
+                                    onChange={(e) => updateLocalSetting('invoicePrefix', e.target.value.toUpperCase())}
+                                    placeholder="INV"
+                                    tooltip="Prefix for invoice numbers (e.g., INV-001)"
+                                />
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-700 mb-3">Currency</label>
+                                    <select
+                                        value={localSettings.currency}
+                                        onChange={(e) => updateLocalSetting('currency', e.target.value)}
+                                        className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white focus-visible:focus touch-friendly"
+                                    >
+                                        <option value="USD">USD ($)</option>
+                                        <option value="EUR">EUR (€)</option>
+                                        <option value="GBP">GBP (£)</option>
+                                        <option value="CAD">CAD ($)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* App Preferences */}
+                        <div className="glass-effect rounded-3xl p-6 mobile-p-4 card-shadow">
+                            <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
+                                <Bell className="w-6 h-6 text-indigo-600" />
+                                App Preferences
+                            </h3>
+                            <div className="space-y-6 mobile-gap-2">
+                                <ToggleSetting
+                                    title="Notifications"
+                                    description="Get notified about pending payments and updates"
+                                    value={localSettings.notifications}
+                                    onChange={(value) => updateLocalSetting('notifications', value)}
+                                />
+                                <ToggleSetting
+                                    title="Auto Backup"
+                                    description="Automatically backup your data to browser storage"
+                                    value={localSettings.autoBackup}
+                                    onChange={(value) => updateLocalSetting('autoBackup', value)}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Data Management */}
+                        <div className="glass-effect rounded-3xl p-6 mobile-p-4 card-shadow">
+                            <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
+                                <Download className="w-6 h-6 text-indigo-600" />
+                                Data Management
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 mobile-grid-1 tablet-grid-2 desktop-grid-3 gap-6 mobile-gap-2">
+                                <button
+                                    onClick={() => exportData('json')}
+                                    className="flex items-center justify-center gap-3 p-6 mobile-p-4 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 rounded-2xl hover:from-blue-100 hover:to-indigo-100 transition-all card-shadow font-semibold focus-visible:focus touch-friendly"
                                 >
-                                    <option value="USD">USD ($)</option>
-                                    <option value="EUR">EUR (€)</option>
-                                    <option value="GBP">GBP (£)</option>
-                                    <option value="CAD">CAD ($)</option>
-                                </select>
+                                    <Download className="w-6 h-6" />
+                                    <span className="mobile-text-sm">Export JSON</span>
+                                </button>
+                                <button
+                                    onClick={() => exportData('csv')}
+                                    className="flex items-center justify-center gap-3 p-6 mobile-p-4 bg-gradient-to-br from-green-50 to-emerald-50 text-green-700 rounded-2xl hover:from-green-100 hover:to-emerald-100 transition-all card-shadow font-semibold focus-visible:focus touch-friendly"
+                                >
+                                    <Download className="w-6 h-6" />
+                                    <span className="mobile-text-sm">Export CSV</span>
+                                </button>
+                                <button
+                                    onClick={() => window.print()}
+                                    className="flex items-center justify-center gap-3 p-6 mobile-p-4 bg-gradient-to-br from-purple-50 to-pink-50 text-purple-700 rounded-2xl hover:from-purple-100 hover:to-pink-100 transition-all card-shadow font-semibold focus-visible:focus touch-friendly"
+                                >
+                                    <Printer className="w-6 h-6" />
+                                    <span className="mobile-text-sm">Print Report</span>
+                                </button>
                             </div>
                         </div>
-                    </div>
 
-                    {/* App Preferences */}
-                    <div className="glass-effect rounded-3xl p-8 card-shadow">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-                            <Bell className="w-6 h-6 text-indigo-600" />
-                            App Preferences
-                        </h3>
-                        <div className="space-y-6">
-                            <ToggleSetting
-                                title="Notifications"
-                                description="Get notified about pending payments and updates"
-                                value={settings.notifications}
-                                onChange={(value) => setSettings({...settings, notifications: value})}
-                            />
-                            <ToggleSetting
-                                title="Auto Backup"
-                                description="Automatically backup your data to browser storage"
-                                value={settings.autoBackup}
-                                onChange={(value) => setSettings({...settings, autoBackup: value})}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Data Management */}
-                    <div className="glass-effect rounded-3xl p-8 card-shadow">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-                            <Download className="w-6 h-6 text-indigo-600" />
-                            Data Management
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <button
-                                onClick={() => exportData('json')}
-                                className="flex items-center justify-center gap-3 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 rounded-2xl hover:from-blue-100 hover:to-indigo-100 transition-all card-shadow font-semibold focus-visible:focus"
-                            >
-                                <Download className="w-6 h-6" />
-                                Export JSON
-                            </button>
-                            <button
-                                onClick={() => exportData('csv')}
-                                className="flex items-center justify-center gap-3 p-6 bg-gradient-to-br from-green-50 to-emerald-50 text-green-700 rounded-2xl hover:from-green-100 hover:to-emerald-100 transition-all card-shadow font-semibold focus-visible:focus"
-                            >
-                                <Download className="w-6 h-6" />
-                                Export CSV
-                            </button>
-                            <button
-                                onClick={() => window.print()}
-                                className="flex items-center justify-center gap-3 p-6 bg-gradient-to-br from-purple-50 to-pink-50 text-purple-700 rounded-2xl hover:from-purple-100 hover:to-pink-100 transition-all card-shadow font-semibold focus-visible:focus"
-                            >
-                                <Printer className="w-6 h-6" />
-                                Print Report
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* System Info */}
-                    <div className="glass-effect rounded-3xl p-8 card-shadow">
-                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-                            <FileText className="w-6 h-6 text-indigo-600" />
-                            System Information
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-                            <div className="bg-white rounded-2xl p-6 card-shadow">
-                                <p className="text-sm text-gray-600 font-medium mb-2">Total Activities</p>
-                                <p className="text-2xl font-bold text-gray-900">{activities.length}</p>
-                            </div>
-                            <div className="bg-white rounded-2xl p-6 card-shadow">
-                                <p className="text-sm text-gray-600 font-medium mb-2">Active Workers</p>
-                                <p className="text-2xl font-bold text-gray-900">{activeWorkers.length}</p>
-                            </div>
-                            <div className="bg-white rounded-2xl p-6 card-shadow">
-                                <p className="text-sm text-gray-600 font-medium mb-2">Next Invoice #</p>
-                                <p className="text-2xl font-bold text-gray-900">{settings.invoicePrefix}-{String(settings.nextInvoiceNumber).padStart(3, '0')}</p>
-                            </div>
-                            <div className="bg-white rounded-2xl p-6 card-shadow">
-                                <p className="text-sm text-gray-600 font-medium mb-2">App Version</p>
-                                <p className="text-2xl font-bold text-gray-900">{APP_CONFIG.VERSION}</p>
+                        {/* System Info */}
+                        <div className="glass-effect rounded-3xl p-6 mobile-p-4 card-shadow">
+                            <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
+                                <FileText className="w-6 h-6 text-indigo-600" />
+                                System Information
+                            </h3>
+                            <div className="grid grid-cols-2 md:grid-cols-4 mobile-grid-1 tablet-grid-2 desktop-grid-3 large-grid-4 gap-6 mobile-gap-2 text-center mobile-text-center">
+                                <div className="bg-white rounded-2xl p-6 mobile-p-4 card-shadow">
+                                    <p className="text-sm mobile-text-xs text-gray-600 font-medium mb-2">Total Activities</p>
+                                    <p className="text-2xl mobile-text-sm font-bold text-gray-900">{activities.length}</p>
+                                </div>
+                                <div className="bg-white rounded-2xl p-6 mobile-p-4 card-shadow">
+                                    <p className="text-sm mobile-text-xs text-gray-600 font-medium mb-2">Active Workers</p>
+                                    <p className="text-2xl mobile-text-sm font-bold text-gray-900">{activeWorkers.length}</p>
+                                </div>
+                                <div className="bg-white rounded-2xl p-6 mobile-p-4 card-shadow">
+                                    <p className="text-sm mobile-text-xs text-gray-600 font-medium mb-2">Next Invoice #</p>
+                                    <p className="text-2xl mobile-text-sm font-bold text-gray-900">{localSettings.invoicePrefix}-{String(localSettings.nextInvoiceNumber).padStart(3, '0')}</p>
+                                </div>
+                                <div className="bg-white rounded-2xl p-6 mobile-p-4 card-shadow">
+                                    <p className="text-sm mobile-text-xs text-gray-600 font-medium mb-2">App Version</p>
+                                    <p className="text-2xl mobile-text-sm font-bold text-gray-900">{APP_CONFIG.VERSION}</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            ));
+                );
+            });
 
             const ToggleSetting = memo(({ title, description, value, onChange }) => (
                 <div className="flex items-center justify-between p-4 bg-white rounded-2xl">
@@ -2377,7 +2512,7 @@
                             {renderContent()}
                         </main>
 
-                        {/* Enhanced Floating Action Button */}
+                        {/*  Floating Action Button */}
                         <div className="fixed bottom-8 right-8 z-50 no-print">
                             <div className="relative">
                                 {quickAction && (
@@ -2416,7 +2551,7 @@
                             </div>
                         </div>
 
-                        {/* Enhanced Work Session Modal */}
+                        {/*  Work Session Modal */}
                         {quickAction === 'work' && (
                             <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                                 <div className="bg-white rounded-3xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto card-shadow-lg">
@@ -2627,7 +2762,7 @@
                             </div>
                         )}
 
-                        {/* Enhanced Add Worker Modal */}
+                        {/*  Add Worker Modal */}
                         {quickAction === 'worker' && (
                             <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                                 <div className="bg-white rounded-3xl p-8 w-full max-w-lg card-shadow-lg">
@@ -2740,7 +2875,7 @@
                             </div>
                         )}
 
-                        {/* Enhanced Edit Activity Modal */}
+                        {/*  Edit Activity Modal */}
                         {editingActivity && (
                             <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                                 <div className="bg-white rounded-3xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto card-shadow-lg">
@@ -2852,7 +2987,7 @@
                             </div>
                         )}
 
-                        {/* Enhanced Edit Worker Modal */}
+                        {/*  Edit Worker Modal */}
                         {editingWorker && (
                             <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                                 <div className="bg-white rounded-3xl p-8 w-full max-w-lg card-shadow-lg">
@@ -2977,7 +3112,7 @@
                             </div>
                         )}
 
-                        {/* Enhanced Confirmation Dialog */}
+                        {/*  Confirmation Dialog */}
                         {confirmDelete && (
                             <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
                                 <div className="bg-white rounded-3xl p-8 w-full max-w-md card-shadow-lg">
@@ -3042,9 +3177,9 @@
             );
         };
 
-        // Render the enhanced app
+        // Render the  app
         const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<EnhancedProfessionalPaymentSystem />);
+        root.render(<ProfessionalPaymentSystem />);
     </script>
 </body>
 </html>
