@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timeline Payment Tracker</title>
+    <title>ServicePro-Management</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -17,15 +17,51 @@
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .card-shadow-lg {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        @media print {
+            body { background: white !important; }
+            .no-print { display: none !important; }
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .service-badge {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+        }
+        .maintenance-badge {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .delivery-badge {
+            background: linear-gradient(45deg, #43e97b 0%, #38f9d7 100%);
+        }
+        .assembly-badge {
+            background: linear-gradient(45deg, #fa709a 0%, #fee140 100%);
+        }
+        .organization-badge {
+            background: linear-gradient(45deg, #a8edea 0%, #fed6e3 100%);
+        }
+        .other-badge {
+            background: linear-gradient(45deg, #d299c2 0%, #fef9d7 100%);
+        }
     </style>
 </head>
 <body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useMemo } = React;
+        const { useState, useMemo, useEffect, useRef } = React;
         
-        // Lucide React icons as simple SVG components
+        // Professional Icon Components
         const Plus = ({ className = "w-6 h-6", ...props }) => (
             <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -68,18 +104,6 @@
             </svg>
         );
 
-        const Coffee = ({ className = "w-6 h-6", ...props }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h1a4 4 0 110 8h-1M3 8h11v9a4 4 0 01-4 4H7a4 4 0 01-4-4V8zM7 8V6a2 2 0 012-2h2a2 2 0 012 2v2" />
-            </svg>
-        );
-
-        const Sparkles = ({ className = "w-6 h-6", ...props }) => (
-            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3l1.5 1.5L5 6l1.5 1.5L5 9l1.5 1.5L5 12l1.5 1.5L5 15l1.5 1.5L5 18l1.5 1.5L5 21M19 3l-1.5 1.5L19 6l-1.5 1.5L19 9l-1.5 1.5L19 12l-1.5 1.5L19 15l-1.5 1.5L19 18l-1.5 1.5L19 21" />
-            </svg>
-        );
-
         const Star = ({ className = "w-6 h-6", ...props }) => (
             <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
@@ -93,74 +117,233 @@
             </svg>
         );
 
-        const TimelinePaymentSystem = () => {
-            const [workers] = useState([
+        const BarChart = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+        );
+
+        const FileText = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+        );
+
+        const Settings = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+
+        const Download = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+        );
+
+        const Search = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        );
+
+        const Bell = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+        );
+
+        const Printer = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+        );
+
+        const Trash = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        );
+
+        const Edit = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+        );
+
+        const AlertCircle = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+        );
+
+        const Briefcase = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 0H8m8 0v10a2 2 0 01-2 2H10a2 2 0 01-2-2V6m8 0V5a1 1 0 00-1-1H9a1 1 0 00-1 1v1" />
+            </svg>
+        );
+
+        const Tool = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+        );
+
+        const Truck = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        );
+
+        const Package = ({ className = "w-6 h-6", ...props }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" {...props}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+        );
+
+        // Category icon mapping
+        const getCategoryIcon = (category) => {
+            const iconMap = {
+                cleaning: Briefcase,
+                maintenance: Tool,
+                delivery: Truck,
+                assembly: Package,
+                organization: Package,
+                other: Briefcase
+            };
+            return iconMap[category] || Briefcase;
+        };
+
+        // Data Management Hook
+        const useLocalStorage = (key, defaultValue) => {
+            const [value, setValue] = useState(() => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : defaultValue;
+                } catch (error) {
+                    console.error(`Error loading ${key} from localStorage:`, error);
+                    return defaultValue;
+                }
+            });
+
+            const setStoredValue = (newValue) => {
+                try {
+                    setValue(newValue);
+                    localStorage.setItem(key, JSON.stringify(newValue));
+                } catch (error) {
+                    console.error(`Error saving ${key} to localStorage:`, error);
+                }
+            };
+
+            return [value, setStoredValue];
+        };
+
+        const ProfessionalPaymentSystem = () => {
+            // Current view state
+            const [currentView, setCurrentView] = useState('timeline');
+            const [quickAction, setQuickAction] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [dateFilter, setDateFilter] = useState('all');
+            const [statusFilter, setStatusFilter] = useState('all');
+            const [selectedWorker, setSelectedWorker] = useState('all');
+            const [confirmDelete, setConfirmDelete] = useState(null);
+
+            // Persistent data
+            const [workers, setWorkers] = useLocalStorage('workers', [
                 { 
                     id: 1, 
-                    name: 'Maria', 
-                    avatar: '👩‍🦱',
-                    skills: ['✨ Cleaning', '📦 Organization'],
+                    name: 'Maria Gonzalez', 
+                    initials: 'MG',
+                    skills: ['Deep Cleaning', 'Organization', 'Regular Maintenance'],
                     defaultRate: 25,
-                    color: 'from-pink-400 to-rose-500'
+                    color: 'bg-gradient-to-br from-purple-500 to-pink-500',
+                    phone: '(555) 123-4567',
+                    email: 'maria@example.com',
+                    joinDate: '2024-01-15',
+                    rating: 4.9,
+                    totalEarnings: 0,
+                    totalHours: 0,
+                    isActive: true,
+                    notes: 'Excellent attention to detail, very reliable'
                 },
                 { 
                     id: 2, 
-                    name: 'James', 
-                    avatar: '👨‍🔧',
-                    skills: ['🚚 Delivery', '🔧 Repairs'],
+                    name: 'James Wilson', 
+                    initials: 'JW',
+                    skills: ['Delivery', 'Repairs', 'Assembly'],
                     defaultRate: 20,
-                    color: 'from-blue-400 to-indigo-500'
+                    color: 'bg-gradient-to-br from-blue-500 to-indigo-500',
+                    phone: '(555) 987-6543',
+                    email: 'james@example.com',
+                    joinDate: '2024-02-01',
+                    rating: 4.7,
+                    totalEarnings: 0,
+                    totalHours: 0,
+                    isActive: true,
+                    notes: 'Great for handyman tasks and quick fixes'
                 },
             ]);
 
-            const [activities, setActivities] = useState([
+            const [activities, setActivities] = useLocalStorage('activities', [
                 {
                     id: 1,
                     type: 'work_completed',
                     workerId: 1,
-                    worker: { id: 1, name: 'Maria', avatar: '👩‍🦱', color: 'from-pink-400 to-rose-500' },
                     title: 'Apartment Deep Clean',
-                    description: 'Kitchen, bathrooms, and living room',
+                    description: 'Kitchen, bathrooms, and living room deep cleaning',
                     date: '2025-08-10',
                     time: '09:00 AM',
-                    duration: '3 hours',
+                    duration: 3,
+                    hourlyRate: 25,
                     amount: 75,
                     status: 'paid',
                     paymentMethod: 'Cash',
-                    mood: '😊',
-                    location: '🏠 Main apartment',
-                    notes: 'Everything looks amazing! Kitchen sparkles ✨'
+                    location: 'Main apartment',
+                    notes: 'Everything looks amazing! Kitchen sparkles',
+                    category: 'cleaning',
+                    quality: 5,
+                    photos: [],
+                    invoiceNumber: 'INV-001',
+                    taxAmount: 0,
+                    paidDate: '2025-08-10'
                 },
                 {
                     id: 2,
-                    type: 'worker_added',
+                    type: 'work_completed',
                     workerId: 2,
-                    worker: { id: 2, name: 'James', avatar: '👨‍🔧', color: 'from-blue-400 to-indigo-500' },
-                    title: 'James joined the team',
-                    description: 'Available for deliveries and maintenance',
+                    title: 'Furniture Assembly',
+                    description: 'IKEA bookshelf and desk assembly',
                     date: '2025-08-09',
                     time: '02:00 PM',
-                    mood: '👋'
-                },
-                {
-                    id: 3,
-                    type: 'payment_pending',
-                    workerId: 1,
-                    worker: { id: 1, name: 'Maria', avatar: '👩‍🦱', color: 'from-pink-400 to-rose-500' },
-                    title: 'Quick tidy-up session',
-                    description: 'Living room organization',
-                    date: '2025-08-11',
-                    time: '10:30 AM',
-                    duration: '1.5 hours',
-                    amount: 37.50,
+                    duration: 2.5,
+                    hourlyRate: 20,
+                    amount: 50,
                     status: 'pending',
                     paymentMethod: 'Venmo',
-                    mood: '📝',
-                    location: '🛋️ Living room'
+                    location: 'Bedroom',
+                    category: 'assembly',
+                    quality: 4,
+                    photos: [],
+                    invoiceNumber: 'INV-002',
+                    taxAmount: 0
                 }
             ]);
 
-            const [quickAction, setQuickAction] = useState(null);
+            const [expenses, setExpenses] = useLocalStorage('expenses', []);
+            const [settings, setSettings] = useLocalStorage('settings', {
+                taxRate: 0,
+                currency: 'USD',
+                businessName: 'ServicePro Management',
+                businessAddress: '',
+                invoicePrefix: 'INV',
+                nextInvoiceNumber: 3,
+                notifications: true,
+                autoBackup: true
+            });
+
+            // Form states
             const [newActivity, setNewActivity] = useState({
                 workerId: '',
                 title: '',
@@ -168,47 +351,117 @@
                 duration: '',
                 rate: 0,
                 location: '',
-                mood: '😊',
-                paymentMethod: 'Cash'
+                paymentMethod: 'Cash',
+                category: 'cleaning',
+                quality: 5,
+                scheduledDate: '',
+                isRecurring: false,
+                recurringPattern: 'weekly'
             });
 
-            const locations = ['🏠 Main apartment', '🍳 Kitchen', '🛁 Bathroom', '🛋️ Living room', '🛏️ Bedroom', '🚪 Entryway'];
-            const moods = ['😊', '✨', '💪', '🎯', '☕', '🌟', '👍', '🎉'];
-            const paymentMethods = ['Cash', 'Venmo', 'PayPal', 'Zelle'];
+            const [newWorker, setNewWorker] = useState({
+                name: '',
+                phone: '',
+                email: '',
+                skills: '',
+                defaultRate: 20,
+                notes: ''
+            });
 
-            const pendingPayments = useMemo(() => 
-                activities.filter(a => a.status === 'pending' && a.amount), 
-                [activities]
-            );
+            // Constants
+            const locations = ['Main apartment', 'Kitchen', 'Bathroom', 'Living room', 'Bedroom', 'Entryway', 'Office', 'Garage'];
+            const paymentMethods = ['Cash', 'Venmo', 'PayPal', 'Zelle', 'Check', 'Credit Card'];
+            const categories = ['cleaning', 'maintenance', 'delivery', 'assembly', 'organization', 'other'];
 
-            const totalPending = useMemo(() => 
-                pendingPayments.reduce((sum, a) => sum + a.amount, 0), 
-                [pendingPayments]
-            );
-
-            const groupedActivities = useMemo(() => {
-                const today = new Date().toISOString().split('T')[0];
-                const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-                
-                const groups = {
-                    today: [],
-                    yesterday: [],
-                    earlier: []
-                };
-
+            // Helper functions (defined before they're used)
+            const getMonthlyTrend = (activities) => {
+                const months = {};
                 activities.forEach(activity => {
-                    if (activity.date === today) {
-                        groups.today.push(activity);
-                    } else if (activity.date === yesterday) {
-                        groups.yesterday.push(activity);
-                    } else {
-                        groups.earlier.push(activity);
-                    }
+                    const month = activity.date.substring(0, 7); // YYYY-MM
+                    if (!months[month]) months[month] = { earnings: 0, hours: 0 };
+                    months[month].earnings += activity.amount || 0;
+                    months[month].hours += activity.duration || 0;
+                });
+                return Object.entries(months).map(([month, data]) => ({ month, ...data })).slice(-6);
+            };
+
+            const getCategoryBreakdown = (activities) => {
+                const breakdown = {};
+                activities.forEach(activity => {
+                    const cat = activity.category || 'other';
+                    if (!breakdown[cat]) breakdown[cat] = { count: 0, earnings: 0 };
+                    breakdown[cat].count++;
+                    breakdown[cat].earnings += activity.amount || 0;
+                });
+                return Object.entries(breakdown).map(([category, data]) => ({ category, ...data }));
+            };
+
+            // Computed values
+            const activeWorkers = workers.filter(w => w.isActive);
+            
+            const filteredActivities = useMemo(() => {
+                return activities.filter(activity => {
+                    const matchesSearch = !searchTerm || 
+                        activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        activity.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        workers.find(w => w.id === activity.workerId)?.name.toLowerCase().includes(searchTerm.toLowerCase());
+                    
+                    const matchesStatus = statusFilter === 'all' || activity.status === statusFilter;
+                    const matchesWorker = selectedWorker === 'all' || activity.workerId === parseInt(selectedWorker);
+                    
+                    const matchesDate = (() => {
+                        if (dateFilter === 'all') return true;
+                        const activityDate = new Date(activity.date);
+                        const now = new Date();
+                        
+                        switch (dateFilter) {
+                            case 'today':
+                                return activityDate.toDateString() === now.toDateString();
+                            case 'week':
+                                const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                                return activityDate >= weekAgo;
+                            case 'month':
+                                const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                                return activityDate >= monthAgo;
+                            default:
+                                return true;
+                        }
+                    })();
+                    
+                    return matchesSearch && matchesStatus && matchesWorker && matchesDate;
+                });
+            }, [activities, searchTerm, statusFilter, selectedWorker, dateFilter, workers]);
+
+            const analytics = useMemo(() => {
+                const totalEarnings = activities.reduce((sum, a) => sum + (a.amount || 0), 0);
+                const paidEarnings = activities.filter(a => a.status === 'paid').reduce((sum, a) => sum + (a.amount || 0), 0);
+                const pendingEarnings = activities.filter(a => a.status === 'pending').reduce((sum, a) => sum + (a.amount || 0), 0);
+                const totalHours = activities.reduce((sum, a) => sum + (a.duration || 0), 0);
+                
+                const workerStats = workers.map(worker => {
+                    const workerActivities = activities.filter(a => a.workerId === worker.id);
+                    const earnings = workerActivities.reduce((sum, a) => sum + (a.amount || 0), 0);
+                    const hours = workerActivities.reduce((sum, a) => sum + (a.duration || 0), 0);
+                    const avgRating = workerActivities.length > 0 
+                        ? workerActivities.reduce((sum, a) => sum + (a.quality || 5), 0) / workerActivities.length 
+                        : 5;
+                    
+                    return { ...worker, totalEarnings: earnings, totalHours: hours, rating: avgRating };
                 });
 
-                return groups;
-            }, [activities]);
+                return {
+                    totalEarnings,
+                    paidEarnings,
+                    pendingEarnings,
+                    totalHours,
+                    averageHourlyRate: totalHours > 0 ? totalEarnings / totalHours : 0,
+                    workerStats,
+                    monthlyTrend: getMonthlyTrend(activities),
+                    categoryBreakdown: getCategoryBreakdown(activities)
+                };
+            }, [activities, workers]);
 
+            // Functions
             const addWorkSession = () => {
                 if (!newActivity.workerId || !newActivity.title || !newActivity.duration) return;
 
@@ -216,26 +469,32 @@
                 const hours = parseFloat(newActivity.duration);
                 const rate = newActivity.rate || worker.defaultRate;
                 const amount = hours * rate;
+                const taxAmount = amount * (settings.taxRate / 100);
 
                 const activity = {
                     id: Date.now(),
                     type: 'work_completed',
                     workerId: worker.id,
-                    worker: worker,
                     title: newActivity.title,
                     description: newActivity.description,
-                    date: new Date().toISOString().split('T')[0],
+                    date: newActivity.scheduledDate || new Date().toISOString().split('T')[0],
                     time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-                    duration: `${hours} hour${hours !== 1 ? 's' : ''}`,
+                    duration: hours,
+                    hourlyRate: rate,
                     amount: amount,
                     status: 'pending',
                     paymentMethod: newActivity.paymentMethod,
-                    mood: newActivity.mood,
                     location: newActivity.location,
-                    notes: newActivity.description
+                    category: newActivity.category,
+                    quality: newActivity.quality,
+                    notes: newActivity.description,
+                    invoiceNumber: `${settings.invoicePrefix}-${String(settings.nextInvoiceNumber).padStart(3, '0')}`,
+                    taxAmount: taxAmount,
+                    photos: []
                 };
 
                 setActivities([activity, ...activities]);
+                setSettings({...settings, nextInvoiceNumber: settings.nextInvoiceNumber + 1});
                 setNewActivity({
                     workerId: '',
                     title: '',
@@ -243,73 +502,329 @@
                     duration: '',
                     rate: 0,
                     location: '',
-                    mood: '😊',
-                    paymentMethod: 'Cash'
+                    paymentMethod: 'Cash',
+                    category: 'cleaning',
+                    quality: 5,
+                    scheduledDate: '',
+                    isRecurring: false,
+                    recurringPattern: 'weekly'
                 });
                 setQuickAction(null);
             };
 
             const markAsPaid = (activityId) => {
                 setActivities(activities.map(a => 
-                    a.id === activityId ? { ...a, status: 'paid' } : a
+                    a.id === activityId ? { 
+                        ...a, 
+                        status: 'paid', 
+                        paidDate: new Date().toISOString().split('T')[0] 
+                    } : a
                 ));
             };
 
-            return (
-                <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50">
-                    {/* Header */}
-                    <div className="bg-white/80 backdrop-blur-lg border-b border-white/20 sticky top-0 z-40">
-                        <div className="max-w-4xl mx-auto px-6 py-6">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center">
-                                        <Home className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                                            My Home Helper
-                                        </h1>
-                                        <p className="text-gray-600">Your apartment activity timeline</p>
+            const deleteActivity = (activityId) => {
+                setActivities(activities.filter(a => a.id !== activityId));
+                setConfirmDelete(null);
+            };
+
+            const addWorker = () => {
+                if (!newWorker.name || !newWorker.phone) return;
+
+                const getInitials = (name) => {
+                    return name.split(' ').map(n => n[0]).join('').toUpperCase();
+                };
+
+                const colors = [
+                    'bg-gradient-to-br from-red-500 to-pink-500',
+                    'bg-gradient-to-br from-yellow-500 to-orange-500',
+                    'bg-gradient-to-br from-green-500 to-emerald-500',
+                    'bg-gradient-to-br from-blue-500 to-cyan-500',
+                    'bg-gradient-to-br from-indigo-500 to-purple-500',
+                    'bg-gradient-to-br from-pink-500 to-rose-500'
+                ];
+
+                const worker = {
+                    id: Date.now(),
+                    name: newWorker.name,
+                    initials: getInitials(newWorker.name),
+                    skills: newWorker.skills.split(',').map(s => s.trim()).filter(s => s),
+                    defaultRate: parseFloat(newWorker.defaultRate) || 20,
+                    color: colors[workers.length % colors.length],
+                    phone: newWorker.phone,
+                    email: newWorker.email,
+                    joinDate: new Date().toISOString().split('T')[0],
+                    rating: 5,
+                    totalEarnings: 0,
+                    totalHours: 0,
+                    isActive: true,
+                    notes: newWorker.notes
+                };
+
+                setWorkers([...workers, worker]);
+                setNewWorker({
+                    name: '',
+                    phone: '',
+                    email: '',
+                    skills: '',
+                    defaultRate: 20,
+                    notes: ''
+                });
+                setQuickAction(null);
+            };
+
+            const deleteWorker = (workerId) => {
+                // Check if worker has any activities
+                const workerActivities = activities.filter(a => a.workerId === workerId);
+                if (workerActivities.length > 0) {
+                    alert('Cannot delete worker with existing activities. Please remove their activities first.');
+                    return;
+                }
+                
+                setWorkers(workers.filter(w => w.id !== workerId));
+                setConfirmDelete(null);
+            };
+
+            const exportData = (format) => {
+                const dataToExport = {
+                    activities: filteredActivities,
+                    workers: workers,
+                    analytics: analytics,
+                    exportDate: new Date().toISOString()
+                };
+
+                if (format === 'json') {
+                    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `home-services-data-${new Date().toISOString().split('T')[0]}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } else if (format === 'csv') {
+                    const csvData = filteredActivities.map(a => {
+                        const worker = workers.find(w => w.id === a.workerId);
+                        return {
+                            Date: a.date,
+                            Worker: worker?.name || 'Unknown',
+                            Title: a.title,
+                            Description: a.description,
+                            Hours: a.duration,
+                            'Hourly Rate': a.hourlyRate,
+                            Amount: a.amount,
+                            Status: a.status,
+                            'Payment Method': a.paymentMethod,
+                            Category: a.category,
+                            Location: a.location
+                        };
+                    });
+
+                    const headers = Object.keys(csvData[0] || {}).join(',');
+                    const rows = csvData.map(row => Object.values(row).join(','));
+                    const csv = [headers, ...rows].join('\n');
+
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `home-services-report-${new Date().toISOString().split('T')[0]}.csv`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+            };
+
+            const generateInvoice = (activity) => {
+                const worker = workers.find(w => w.id === activity.workerId);
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <html>
+                        <head>
+                            <title>Invoice ${activity.invoiceNumber}</title>
+                            <style>
+                                body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 40px; color: #333; }
+                                .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #f0f0f0; padding-bottom: 20px; }
+                                .company-name { font-size: 32px; font-weight: bold; color: #4f46e5; margin-bottom: 10px; }
+                                .invoice-title { font-size: 24px; color: #6b7280; }
+                                .invoice-details { margin: 30px 0; }
+                                .detail-row { display: flex; justify-content: space-between; margin: 10px 0; }
+                                .services { margin: 30px 0; }
+                                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                                th { background: #f8fafc; padding: 15px; text-align: left; border-bottom: 2px solid #e5e7eb; font-weight: 600; }
+                                td { padding: 15px; border-bottom: 1px solid #f3f4f6; }
+                                .total-row { background: #f8fafc; font-weight: bold; }
+                                .footer { margin-top: 50px; text-align: center; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="header">
+                                <div class="company-name">${settings.businessName}</div>
+                                <div class="invoice-title">Service Invoice</div>
+                            </div>
+                            
+                            <div class="invoice-details">
+                                <div class="detail-row">
+                                    <strong>Invoice Number:</strong>
+                                    <span>${activity.invoiceNumber}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Service Date:</strong>
+                                    <span>${activity.date}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Service Provider:</strong>
+                                    <span>${worker?.name || 'Unknown'}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Location:</strong>
+                                    <span>${activity.location}</span>
+                                </div>
+                                <div class="detail-row">
+                                    <strong>Payment Method:</strong>
+                                    <span>${activity.paymentMethod}</span>
+                                </div>
+                            </div>
+
+                            <div class="services">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Service Description</th>
+                                            <th>Hours</th>
+                                            <th>Rate</th>
+                                            <th>Amount</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <strong>${activity.title}</strong><br>
+                                                <small style="color: #6b7280;">${activity.description}</small>
+                                            </td>
+                                            <td>${activity.duration}</td>
+                                            <td>$${activity.hourlyRate}/hr</td>
+                                            <td>$${activity.amount.toFixed(2)}</td>
+                                        </tr>
+                                        ${activity.taxAmount > 0 ? `
+                                        <tr>
+                                            <td colspan="3"><strong>Tax (${settings.taxRate}%)</strong></td>
+                                            <td>$${activity.taxAmount.toFixed(2)}</td>
+                                        </tr>
+                                        ` : ''}
+                                        <tr class="total-row">
+                                            <td colspan="3"><strong>Total Amount</strong></td>
+                                            <td><strong>$${(activity.amount + (activity.taxAmount || 0)).toFixed(2)}</strong></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="footer">
+                                <p>Thank you for using our professional services!</p>
+                                <p><small>Invoice generated on ${new Date().toLocaleDateString()}</small></p>
+                            </div>
+                        </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            };
+
+            // Render different views
+            const renderContent = () => {
+                switch (currentView) {
+                    case 'timeline':
+                        return <TimelineView />;
+                    case 'analytics':
+                        return <AnalyticsView />;
+                    case 'workers':
+                        return <WorkersView />;
+                    case 'settings':
+                        return <SettingsView />;
+                    default:
+                        return <TimelineView />;
+                }
+            };
+
+            const TimelineView = () => {
+                const groupedActivities = useMemo(() => {
+                    const today = new Date().toISOString().split('T')[0];
+                    const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                    
+                    const groups = {
+                        today: [],
+                        yesterday: [],
+                        earlier: []
+                    };
+
+                    filteredActivities.forEach(activity => {
+                        if (activity.date === today) {
+                            groups.today.push(activity);
+                        } else if (activity.date === yesterday) {
+                            groups.yesterday.push(activity);
+                        } else {
+                            groups.earlier.push(activity);
+                        }
+                    });
+
+                    return groups;
+                }, [filteredActivities]);
+
+                return (
+                    <div className="space-y-8">
+                        {/* Filters */}
+                        <div className="glass-effect rounded-3xl p-6 card-shadow">
+                            <div className="flex flex-wrap gap-4 items-center">
+                                <div className="flex-1 min-w-64">
+                                    <div className="relative">
+                                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search activities..."
+                                            value={searchTerm}
+                                            onChange={(e) => setSearchTerm(e.target.value)}
+                                            className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white"
+                                        />
                                     </div>
                                 </div>
                                 
-                                {totalPending > 0 && (
-                                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200 rounded-2xl px-4 py-2">
-                                        <div className="flex items-center gap-2">
-                                            <DollarSign className="w-4 h-4 text-amber-600" />
-                                            <span className="font-semibold text-amber-800">${totalPending} to pay</span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                                <select
+                                    value={statusFilter}
+                                    onChange={(e) => setStatusFilter(e.target.value)}
+                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                >
+                                    <option value="all">All Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="paid">Paid</option>
+                                </select>
 
-                    <div className="max-w-4xl mx-auto px-6 py-8">
-                        {/* Team Overview */}
-                        <div className="bg-white/70 backdrop-blur-sm rounded-3xl p-6 mb-8 border border-white/50">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <Star className="w-5 h-5 text-yellow-500" />
-                                Your Team
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                {workers.map(worker => (
-                                    <div key={worker.id} className="bg-white/80 rounded-2xl p-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 bg-gradient-to-br ${worker.color} rounded-xl flex items-center justify-center text-white text-lg`}>
-                                                {worker.avatar}
-                                            </div>
-                                            <div>
-                                                <h3 className="font-semibold text-gray-900">{worker.name}</h3>
-                                                <div className="flex gap-1 text-sm">
-                                                    {worker.skills.map((skill, idx) => (
-                                                        <span key={idx}>{skill}</span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                                <select
+                                    value={selectedWorker}
+                                    onChange={(e) => setSelectedWorker(e.target.value)}
+                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                >
+                                    <option value="all">All Workers</option>
+                                    {activeWorkers.map(worker => (
+                                        <option key={worker.id} value={worker.id}>{worker.name}</option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    value={dateFilter}
+                                    onChange={(e) => setDateFilter(e.target.value)}
+                                    className="px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                >
+                                    <option value="all">All Time</option>
+                                    <option value="today">Today</option>
+                                    <option value="week">This Week</option>
+                                    <option value="month">This Month</option>
+                                </select>
+
+                                <button
+                                    onClick={() => exportData('csv')}
+                                    className="px-4 py-3 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 rounded-2xl hover:from-gray-200 hover:to-gray-300 transition-all flex items-center gap-2 font-medium"
+                                >
+                                    <Download className="w-4 h-4" />
+                                    Export
+                                </button>
                             </div>
                         </div>
 
@@ -319,14 +834,17 @@
                             {groupedActivities.today.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="bg-gradient-to-r from-violet-500 to-purple-600 rounded-full px-4 py-2">
-                                            <span className="text-white font-semibold">Today</span>
+                                        <div className="gradient-bg text-white rounded-full px-5 py-2 font-semibold">
+                                            Today
                                         </div>
-                                        <div className="h-px bg-gradient-to-r from-purple-200 to-transparent flex-1"></div>
+                                        <div className="h-px bg-gradient-to-r from-indigo-200 to-transparent flex-1"></div>
+                                        <div className="text-sm text-gray-500 font-medium">
+                                            {groupedActivities.today.length} activities
+                                        </div>
                                     </div>
                                     <div className="space-y-4">
                                         {groupedActivities.today.map(activity => (
-                                            <ActivityCard key={activity.id} activity={activity} onMarkPaid={markAsPaid} />
+                                            <ActivityCard key={activity.id} activity={activity} />
                                         ))}
                                     </div>
                                 </div>
@@ -336,14 +854,17 @@
                             {groupedActivities.yesterday.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full px-4 py-2">
-                                            <span className="text-white font-semibold">Yesterday</span>
+                                        <div className="bg-gradient-to-r from-slate-500 to-slate-600 text-white rounded-full px-5 py-2 font-semibold">
+                                            Yesterday
                                         </div>
-                                        <div className="h-px bg-gradient-to-r from-blue-200 to-transparent flex-1"></div>
+                                        <div className="h-px bg-gradient-to-r from-slate-200 to-transparent flex-1"></div>
+                                        <div className="text-sm text-gray-500 font-medium">
+                                            {groupedActivities.yesterday.length} activities
+                                        </div>
                                     </div>
                                     <div className="space-y-4">
                                         {groupedActivities.yesterday.map(activity => (
-                                            <ActivityCard key={activity.id} activity={activity} onMarkPaid={markAsPaid} />
+                                            <ActivityCard key={activity.id} activity={activity} />
                                         ))}
                                     </div>
                                 </div>
@@ -353,29 +874,32 @@
                             {groupedActivities.earlier.length > 0 && (
                                 <div>
                                     <div className="flex items-center gap-3 mb-6">
-                                        <div className="bg-gradient-to-r from-gray-400 to-gray-500 rounded-full px-4 py-2">
-                                            <span className="text-white font-semibold">Earlier</span>
+                                        <div className="bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-full px-5 py-2 font-semibold">
+                                            Earlier
                                         </div>
                                         <div className="h-px bg-gradient-to-r from-gray-200 to-transparent flex-1"></div>
+                                        <div className="text-sm text-gray-500 font-medium">
+                                            {groupedActivities.earlier.length} activities
+                                        </div>
                                     </div>
                                     <div className="space-y-4">
                                         {groupedActivities.earlier.map(activity => (
-                                            <ActivityCard key={activity.id} activity={activity} onMarkPaid={markAsPaid} />
+                                            <ActivityCard key={activity.id} activity={activity} />
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {activities.length === 0 && (
-                                <div className="text-center py-16">
-                                    <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Coffee className="w-8 h-8 text-gray-400" />
+                            {filteredActivities.length === 0 && (
+                                <div className="text-center py-20">
+                                    <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <FileText className="w-10 h-10 text-gray-400" />
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-2">No activities yet</h3>
-                                    <p className="text-gray-600 mb-6">Start by recording your first work session!</p>
+                                    <h3 className="text-xl font-semibold text-gray-900 mb-3">No activities found</h3>
+                                    <p className="text-gray-600 mb-8 max-w-md mx-auto">Try adjusting your filters or add a new work session to get started!</p>
                                     <button
                                         onClick={() => setQuickAction('work')}
-                                        className="bg-gradient-to-r from-violet-500 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all"
+                                        className="gradient-bg text-white px-8 py-4 rounded-2xl font-semibold hover:shadow-lg transition-all transform hover:scale-105"
                                     >
                                         Record Work Session
                                     </button>
@@ -383,34 +907,551 @@
                             )}
                         </div>
                     </div>
+                );
+            };
+
+            const ActivityCard = ({ activity }) => {
+                const worker = workers.find(w => w.id === activity.workerId);
+                const CategoryIcon = getCategoryIcon(activity.category);
+                
+                const getStatusColor = () => {
+                    if (activity.status === 'paid') return 'from-emerald-500 to-green-500';
+                    if (activity.status === 'pending') return 'from-amber-500 to-orange-500';
+                    return 'from-gray-400 to-gray-500';
+                };
+
+                const getCardStyle = () => {
+                    if (activity.status === 'paid') return 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200';
+                    if (activity.status === 'pending') return 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200';
+                    return 'bg-white border-gray-200';
+                };
+
+                const getCategoryBadgeClass = () => {
+                    const badgeMap = {
+                        cleaning: 'service-badge',
+                        maintenance: 'maintenance-badge',
+                        delivery: 'delivery-badge',
+                        assembly: 'assembly-badge',
+                        organization: 'organization-badge',
+                        other: 'other-badge'
+                    };
+                    return badgeMap[activity.category] || 'other-badge';
+                };
+
+                return (
+                    <div className={`${getCardStyle()} backdrop-blur-sm rounded-3xl p-6 border transition-all hover:shadow-lg card-shadow`}>
+                        <div className="flex items-start gap-4">
+                            {/* Avatar & Status */}
+                            <div className="relative">
+                                <div className={`w-14 h-14 ${worker?.color || 'bg-gradient-to-br from-gray-400 to-gray-500'} rounded-2xl flex items-center justify-center text-white font-semibold text-lg shadow-lg`}>
+                                    {worker?.initials || 'UK'}
+                                </div>
+                                <div className={`absolute -bottom-1 -right-1 w-7 h-7 bg-gradient-to-br ${getStatusColor()} rounded-full flex items-center justify-center shadow-lg`}>
+                                    {activity.status === 'paid' ? (
+                                        <CheckCircle className="w-4 h-4 text-white" />
+                                    ) : (
+                                        <Clock className="w-4 h-4 text-white" />
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <h3 className="font-bold text-gray-900 text-lg">{activity.title}</h3>
+                                            <span className={`${getCategoryBadgeClass()} text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1`}>
+                                                <CategoryIcon className="w-3 h-3" />
+                                                {activity.category}
+                                            </span>
+                                        </div>
+                                        <p className="text-gray-600 mb-1">{activity.description}</p>
+                                        <p className="text-sm font-semibold text-indigo-600">{worker?.name || 'Unknown Worker'}</p>
+                                    </div>
+                                    {activity.amount && (
+                                        <div className="text-right">
+                                            <p className="text-2xl font-bold text-gray-900">${activity.amount.toFixed(2)}</p>
+                                            <p className="text-sm text-gray-500 font-medium">{activity.paymentMethod}</p>
+                                            {activity.invoiceNumber && (
+                                                <p className="text-xs text-gray-400">{activity.invoiceNumber}</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4 font-medium">
+                                    <span className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-lg">
+                                        <Clock className="w-4 h-4" />
+                                        {activity.time} • {activity.duration}h @ ${activity.hourlyRate}/hr
+                                    </span>
+                                    {activity.location && (
+                                        <span className="flex items-center gap-2 bg-white/70 px-3 py-1 rounded-lg">
+                                            <MapPin className="w-4 h-4" />
+                                            {activity.location}
+                                        </span>
+                                    )}
+                                    {activity.quality && (
+                                        <span className="flex items-center gap-1 bg-white/70 px-3 py-1 rounded-lg">
+                                            <Star className="w-4 h-4 text-yellow-500" />
+                                            {activity.quality}/5
+                                        </span>
+                                    )}
+                                </div>
+
+                                {activity.notes && activity.notes !== activity.description && (
+                                    <div className="bg-white/60 rounded-2xl p-4 mb-4 border border-white/40">
+                                        <p className="text-sm text-gray-700 italic">"{activity.notes}"</p>
+                                    </div>
+                                )}
+
+                                <div className="flex flex-wrap gap-3">
+                                    {activity.status === 'pending' && activity.amount && (
+                                        <button
+                                            onClick={() => markAsPaid(activity.id)}
+                                            className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-5 py-2 rounded-xl font-semibold hover:shadow-lg transition-all flex items-center gap-2 transform hover:scale-105"
+                                        >
+                                            <DollarSign className="w-4 h-4" />
+                                            Mark as Paid
+                                        </button>
+                                    )}
+                                    
+                                    <button
+                                        onClick={() => generateInvoice(activity)}
+                                        className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-5 py-2 rounded-xl font-semibold hover:from-gray-200 hover:to-gray-300 transition-all flex items-center gap-2"
+                                    >
+                                        <Printer className="w-4 h-4" />
+                                        Print Invoice
+                                    </button>
+
+                                    <button
+                                        onClick={() => setConfirmDelete({ type: 'activity', id: activity.id, name: activity.title })}
+                                        className="bg-gradient-to-r from-red-100 to-red-200 text-red-700 px-5 py-2 rounded-xl font-semibold hover:from-red-200 hover:to-red-300 transition-all flex items-center gap-2"
+                                    >
+                                        <Trash className="w-4 h-4" />
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const AnalyticsView = () => (
+                <div className="space-y-8">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div className="glass-effect rounded-3xl p-6 card-shadow">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl flex items-center justify-center">
+                                    <DollarSign className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-gray-900">${analytics.totalEarnings.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-600 font-medium">Total Earnings</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="glass-effect rounded-3xl p-6 card-shadow">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center">
+                                    <Clock className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-gray-900">{analytics.totalHours.toFixed(1)}h</p>
+                                    <p className="text-sm text-gray-600 font-medium">Total Hours</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="glass-effect rounded-3xl p-6 card-shadow">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-2xl flex items-center justify-center">
+                                    <BarChart className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-gray-900">${analytics.averageHourlyRate.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-600 font-medium">Avg. Rate</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="glass-effect rounded-3xl p-6 card-shadow">
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl flex items-center justify-center">
+                                    <Bell className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <p className="text-2xl font-bold text-gray-900">${analytics.pendingEarnings.toFixed(2)}</p>
+                                    <p className="text-sm text-gray-600 font-medium">Pending</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Worker Performance */}
+                    <div className="glass-effect rounded-3xl p-8 card-shadow">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                            <User className="w-6 h-6 text-indigo-600" />
+                            Worker Performance
+                        </h3>
+                        <div className="space-y-6">
+                            {analytics.workerStats.map(worker => (
+                                <div key={worker.id} className="flex items-center justify-between p-6 bg-white rounded-2xl card-shadow">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-12 h-12 ${worker.color} rounded-2xl flex items-center justify-center text-white font-semibold shadow-lg`}>
+                                            {worker.initials}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900 text-lg">{worker.name}</p>
+                                            <p className="text-sm text-gray-600 font-medium">{worker.totalHours.toFixed(1)} hours • ⭐ {worker.rating.toFixed(1)} rating</p>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-xl font-bold text-gray-900">${worker.totalEarnings.toFixed(2)}</p>
+                                        <p className="text-sm text-gray-600 font-medium">Total earned</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Category Breakdown */}
+                    <div className="glass-effect rounded-3xl p-8 card-shadow">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                            <BarChart className="w-6 h-6 text-indigo-600" />
+                            Service Categories
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {analytics.categoryBreakdown.map(({ category, count, earnings }) => {
+                                const CategoryIcon = getCategoryIcon(category);
+                                return (
+                                    <div key={category} className="bg-white rounded-2xl p-6 card-shadow">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
+                                                <CategoryIcon className="w-5 h-5 text-white" />
+                                            </div>
+                                            <h4 className="font-bold text-gray-900 capitalize text-lg">{category}</h4>
+                                        </div>
+                                        <p className="text-sm text-gray-600 font-medium mb-1">{count} sessions</p>
+                                        <p className="text-xl font-bold text-gray-900">${earnings.toFixed(2)}</p>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const WorkersView = () => (
+                <div className="space-y-8">
+                    {/* Workers List */}
+                    <div className="glass-effect rounded-3xl p-8 card-shadow">
+                        <div className="flex items-center justify-between mb-8">
+                            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                                <User className="w-6 h-6 text-indigo-600" />
+                                Team Members
+                            </h3>
+                            <button
+                                onClick={() => setQuickAction('worker')}
+                                className="gradient-bg text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all flex items-center gap-2 transform hover:scale-105"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Add Worker
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {workers.map(worker => {
+                                const workerStats = analytics.workerStats.find(s => s.id === worker.id);
+                                return (
+                                    <div key={worker.id} className="bg-white rounded-2xl p-6 card-shadow relative">
+                                        <div className="flex items-start gap-4">
+                                            <div className={`w-14 h-14 ${worker.color} rounded-2xl flex items-center justify-center text-white font-bold text-lg shadow-lg`}>
+                                                {worker.initials}
+                                            </div>
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-3 mb-3">
+                                                    <h4 className="font-bold text-gray-900 text-lg">{worker.name}</h4>
+                                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                                                        worker.isActive 
+                                                            ? 'bg-green-100 text-green-700' 
+                                                            : 'bg-gray-100 text-gray-600'
+                                                    }`}>
+                                                        {worker.isActive ? 'Active' : 'Inactive'}
+                                                    </span>
+                                                </div>
+                                                
+                                                <div className="space-y-2 text-sm text-gray-600 mb-4">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-4 h-4 text-gray-400">📞</span>
+                                                        <span className="font-medium">{worker.phone}</span>
+                                                    </div>
+                                                    {worker.email && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="w-4 h-4 text-gray-400">✉️</span>
+                                                            <span className="font-medium">{worker.email}</span>
+                                                        </div>
+                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        <DollarSign className="w-4 h-4 text-gray-400" />
+                                                        <span className="font-medium">${worker.defaultRate}/hr</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Star className="w-4 h-4 text-yellow-500" />
+                                                        <span className="font-medium">{workerStats?.rating.toFixed(1) || '5.0'} rating</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-wrap gap-2 mb-4">
+                                                    {worker.skills.map((skill, idx) => (
+                                                        <span key={idx} className="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-medium">
+                                                            {skill}
+                                                        </span>
+                                                    ))}
+                                                </div>
+
+                                                {worker.notes && (
+                                                    <div className="bg-gray-50 rounded-xl p-3 mb-4">
+                                                        <p className="text-sm text-gray-700 italic">"{worker.notes}"</p>
+                                                    </div>
+                                                )}
+
+                                                <div className="grid grid-cols-2 gap-6 pt-4 border-t border-gray-100">
+                                                    <div>
+                                                        <p className="text-sm text-gray-600 font-medium">Total Earned</p>
+                                                        <p className="font-bold text-lg text-gray-900">${workerStats?.totalEarnings.toFixed(2) || '0.00'}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm text-gray-600 font-medium">Hours Worked</p>
+                                                        <p className="font-bold text-lg text-gray-900">{workerStats?.totalHours.toFixed(1) || '0.0'}h</p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex gap-2 mt-4">
+                                                    <button
+                                                        onClick={() => setConfirmDelete({ type: 'worker', id: worker.id, name: worker.name })}
+                                                        className="bg-gradient-to-r from-red-100 to-red-200 text-red-700 px-4 py-2 rounded-xl font-medium hover:from-red-200 hover:to-red-300 transition-all flex items-center gap-2"
+                                                    >
+                                                        <Trash className="w-4 h-4" />
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const SettingsView = () => (
+                <div className="space-y-8">
+                    {/* Business Settings */}
+                    <div className="glass-effect rounded-3xl p-8 card-shadow">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                            <Settings className="w-6 h-6 text-indigo-600" />
+                            Business Settings
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">Business Name</label>
+                                <input
+                                    type="text"
+                                    value={settings.businessName}
+                                    onChange={(e) => setSettings({...settings, businessName: e.target.value})}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">Tax Rate (%)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={settings.taxRate}
+                                    onChange={(e) => setSettings({...settings, taxRate: parseFloat(e.target.value) || 0})}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">Invoice Prefix</label>
+                                <input
+                                    type="text"
+                                    value={settings.invoicePrefix}
+                                    onChange={(e) => setSettings({...settings, invoicePrefix: e.target.value})}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-3">Currency</label>
+                                <select
+                                    value={settings.currency}
+                                    onChange={(e) => setSettings({...settings, currency: e.target.value})}
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                >
+                                    <option value="USD">USD ($)</option>
+                                    <option value="EUR">EUR (€)</option>
+                                    <option value="GBP">GBP (£)</option>
+                                    <option value="CAD">CAD ($)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Data Management */}
+                    <div className="glass-effect rounded-3xl p-8 card-shadow">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                            <Download className="w-6 h-6 text-indigo-600" />
+                            Data Management
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <button
+                                onClick={() => exportData('json')}
+                                className="flex items-center justify-center gap-3 p-6 bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 rounded-2xl hover:from-blue-100 hover:to-indigo-100 transition-all card-shadow font-semibold"
+                            >
+                                <Download className="w-6 h-6" />
+                                Export JSON
+                            </button>
+                            <button
+                                onClick={() => exportData('csv')}
+                                className="flex items-center justify-center gap-3 p-6 bg-gradient-to-br from-green-50 to-emerald-50 text-green-700 rounded-2xl hover:from-green-100 hover:to-emerald-100 transition-all card-shadow font-semibold"
+                            >
+                                <Download className="w-6 h-6" />
+                                Export CSV
+                            </button>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex items-center justify-center gap-3 p-6 bg-gradient-to-br from-purple-50 to-pink-50 text-purple-700 rounded-2xl hover:from-purple-100 hover:to-pink-100 transition-all card-shadow font-semibold"
+                            >
+                                <Printer className="w-6 h-6" />
+                                Print Report
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* System Info */}
+                    <div className="glass-effect rounded-3xl p-8 card-shadow">
+                        <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                            <FileText className="w-6 h-6 text-indigo-600" />
+                            System Information
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                            <div className="bg-white rounded-2xl p-6 card-shadow">
+                                <p className="text-sm text-gray-600 font-medium mb-2">Total Activities</p>
+                                <p className="text-2xl font-bold text-gray-900">{activities.length}</p>
+                            </div>
+                            <div className="bg-white rounded-2xl p-6 card-shadow">
+                                <p className="text-sm text-gray-600 font-medium mb-2">Active Workers</p>
+                                <p className="text-2xl font-bold text-gray-900">{activeWorkers.length}</p>
+                            </div>
+                            <div className="bg-white rounded-2xl p-6 card-shadow">
+                                <p className="text-sm text-gray-600 font-medium mb-2">Next Invoice #</p>
+                                <p className="text-2xl font-bold text-gray-900">{settings.invoicePrefix}-{String(settings.nextInvoiceNumber).padStart(3, '0')}</p>
+                            </div>
+                            <div className="bg-white rounded-2xl p-6 card-shadow">
+                                <p className="text-sm text-gray-600 font-medium mb-2">Last Updated</p>
+                                <p className="text-2xl font-bold text-gray-900">{new Date().toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+                    {/* Header */}
+                    <div className="glass-effect border-b border-white/30 sticky top-0 z-40">
+                        <div className="max-w-7xl mx-auto px-6 py-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 gradient-bg rounded-2xl flex items-center justify-center shadow-lg">
+                                        <Home className="w-7 h-7 text-white" />
+                                    </div>
+                                    <div>
+                                        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                                            {settings.businessName}
+                                        </h1>
+                                        <p className="text-gray-600 font-medium">Professional Home Services Management</p>
+                                    </div>
+                                </div>
+                                
+                                {analytics.pendingEarnings > 0 && (
+                                    <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-200 rounded-2xl px-6 py-3 card-shadow">
+                                        <div className="flex items-center gap-3">
+                                            <Bell className="w-5 h-5 text-amber-600" />
+                                            <span className="font-bold text-amber-800 text-lg">${analytics.pendingEarnings.toFixed(2)} pending</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Navigation */}
+                            <div className="flex gap-2 mt-6">
+                                {[
+                                    { id: 'timeline', label: 'Timeline', icon: Clock },
+                                    { id: 'analytics', label: 'Analytics', icon: BarChart },
+                                    { id: 'workers', label: 'Workers', icon: User },
+                                    { id: 'settings', label: 'Settings', icon: Settings }
+                                ].map(({ id, label, icon: Icon }) => (
+                                    <button
+                                        key={id}
+                                        onClick={() => setCurrentView(id)}
+                                        className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-semibold transition-all ${
+                                            currentView === id
+                                                ? 'gradient-bg text-white shadow-lg transform scale-105'
+                                                : 'text-gray-600 hover:bg-white/50 hover:shadow-md'
+                                        }`}
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                        {label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="max-w-7xl mx-auto px-6 py-8">
+                        {renderContent()}
+                    </div>
 
                     {/* Floating Action Button */}
-                    <div className="fixed bottom-6 right-6 z-50">
+                    <div className="fixed bottom-8 right-8 z-50 no-print">
                         <div className="relative">
                             {quickAction && (
-                                <div className="absolute bottom-16 right-0 bg-white rounded-2xl shadow-xl border border-gray-200 p-1 min-w-48">
+                                <div className="absolute bottom-20 right-0 bg-white rounded-2xl shadow-xl border border-gray-200 p-2 min-w-56 card-shadow-lg">
                                     <button
                                         onClick={() => setQuickAction('work')}
-                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-xl flex items-center gap-3"
+                                        className="w-full text-left px-5 py-4 hover:bg-gray-50 rounded-xl flex items-center gap-3 font-medium transition-all"
                                     >
-                                        <Sparkles className="w-4 h-4 text-purple-500" />
+                                        <Clock className="w-5 h-5 text-indigo-600" />
                                         Record Work Session
                                     </button>
                                     <button
-                                        onClick={() => setQuickAction('payment')}
-                                        className="w-full text-left px-4 py-3 hover:bg-gray-50 rounded-xl flex items-center gap-3"
+                                        onClick={() => setQuickAction('worker')}
+                                        className="w-full text-left px-5 py-4 hover:bg-gray-50 rounded-xl flex items-center gap-3 font-medium transition-all"
                                     >
-                                        <DollarSign className="w-4 h-4 text-emerald-500" />
-                                        Quick Payment
+                                        <User className="w-5 h-5 text-blue-600" />
+                                        Add Worker
+                                    </button>
+                                    <button
+                                        onClick={() => exportData('csv')}
+                                        className="w-full text-left px-5 py-4 hover:bg-gray-50 rounded-xl flex items-center gap-3 font-medium transition-all"
+                                    >
+                                        <Download className="w-5 h-5 text-emerald-600" />
+                                        Export Report
                                     </button>
                                 </div>
                             )}
                             
                             <button
                                 onClick={() => setQuickAction(quickAction ? null : 'menu')}
-                                className="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                                className="w-16 h-16 gradient-bg rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-110 active:scale-95"
                             >
-                                <Plus className={`w-6 h-6 transition-transform ${quickAction ? 'rotate-45' : ''}`} />
+                                <Plus className={`w-7 h-7 transition-transform ${quickAction ? 'rotate-45' : ''}`} />
                             </button>
                         </div>
                     </div>
@@ -418,29 +1459,34 @@
                     {/* Work Session Modal */}
                     {quickAction === 'work' && (
                         <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                            <div className="bg-white rounded-3xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto">
-                                <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                                    <Sparkles className="w-5 h-5 text-purple-500" />
+                            <div className="bg-white rounded-3xl p-8 w-full max-w-lg max-h-[90vh] overflow-y-auto card-shadow-lg">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                                    <Clock className="w-6 h-6 text-indigo-600" />
                                     Record Work Session
                                 </h3>
                                 
-                                <div className="space-y-5">
+                                <div className="space-y-6">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Who did the work?</label>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            {workers.map(worker => (
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Worker</label>
+                                        <div className="grid grid-cols-1 gap-3">
+                                            {activeWorkers.map(worker => (
                                                 <button
                                                     key={worker.id}
                                                     onClick={() => setNewActivity({...newActivity, workerId: worker.id, rate: worker.defaultRate})}
-                                                    className={`p-3 rounded-2xl border-2 transition-all ${
+                                                    className={`p-4 rounded-2xl border-2 transition-all text-left ${
                                                         newActivity.workerId === worker.id
-                                                            ? 'border-purple-300 bg-purple-50'
-                                                            : 'border-gray-200 hover:border-gray-300'
+                                                            ? 'border-indigo-300 bg-indigo-50'
+                                                            : 'border-gray-200 hover:border-gray-300 bg-white'
                                                     }`}
                                                 >
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-lg">{worker.avatar}</span>
-                                                        <span className="font-medium">{worker.name}</span>
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={`w-10 h-10 ${worker.color} rounded-2xl flex items-center justify-center text-white font-semibold shadow-lg`}>
+                                                            {worker.initials}
+                                                        </div>
+                                                        <div>
+                                                            <span className="font-semibold text-gray-900">{worker.name}</span>
+                                                            <p className="text-sm text-gray-600 font-medium">${worker.defaultRate}/hr</p>
+                                                        </div>
                                                     </div>
                                                 </button>
                                             ))}
@@ -448,61 +1494,73 @@
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">What was done?</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Service Title</label>
                                         <input
                                             type="text"
                                             placeholder="e.g., Kitchen deep clean"
                                             value={newActivity.title}
                                             onChange={(e) => setNewActivity({...newActivity, title: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                         />
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Details (optional)</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Any additional notes..."
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Description</label>
+                                        <textarea
+                                            placeholder="Additional details about the work..."
                                             value={newActivity.description}
                                             onChange={(e) => setNewActivity({...newActivity, description: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none bg-white"
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Hours</label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Hours</label>
                                             <input
                                                 type="number"
-                                                step="0.5"
+                                                step="0.25"
                                                 placeholder="2.5"
                                                 value={newActivity.duration}
                                                 onChange={(e) => setNewActivity({...newActivity, duration: e.target.value})}
-                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                             />
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-2">Rate/hr</label>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Rate/hr</label>
                                             <input
                                                 type="number"
                                                 placeholder="25"
                                                 value={newActivity.rate}
                                                 onChange={(e) => setNewActivity({...newActivity, rate: parseFloat(e.target.value) || 0})}
-                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
                                             />
                                         </div>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Category</label>
+                                        <select
+                                            value={newActivity.category}
+                                            onChange={(e) => setNewActivity({...newActivity, category: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                        >
+                                            {categories.map(cat => (
+                                                <option key={cat} value={cat} className="capitalize">{cat}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Location</label>
                                         <div className="grid grid-cols-2 gap-2">
                                             {locations.map(location => (
                                                 <button
                                                     key={location}
                                                     onClick={() => setNewActivity({...newActivity, location})}
-                                                    className={`p-2 rounded-xl text-sm transition-all ${
+                                                    className={`p-3 rounded-xl text-sm transition-all font-medium ${
                                                         newActivity.location === location
-                                                            ? 'bg-purple-100 text-purple-700 border-2 border-purple-300'
+                                                            ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300'
                                                             : 'bg-gray-50 text-gray-700 border-2 border-transparent hover:bg-gray-100'
                                                     }`}
                                                 >
@@ -512,63 +1570,200 @@
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Mood</label>
-                                        <div className="flex gap-2">
-                                            {moods.map(mood => (
-                                                <button
-                                                    key={mood}
-                                                    onClick={() => setNewActivity({...newActivity, mood})}
-                                                    className={`w-10 h-10 rounded-full text-lg transition-all ${
-                                                        newActivity.mood === mood
-                                                            ? 'bg-purple-100 scale-110'
-                                                            : 'hover:bg-gray-100 hover:scale-105'
-                                                    }`}
-                                                >
-                                                    {mood}
-                                                </button>
-                                            ))}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Payment Method</label>
+                                            <select
+                                                value={newActivity.paymentMethod}
+                                                onChange={(e) => setNewActivity({...newActivity, paymentMethod: e.target.value})}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                            >
+                                                {paymentMethods.map(method => (
+                                                    <option key={method} value={method}>{method}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-semibold text-gray-700 mb-3">Quality (1-5)</label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="5"
+                                                value={newActivity.quality}
+                                                onChange={(e) => setNewActivity({...newActivity, quality: parseInt(e.target.value) || 5})}
+                                                className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                            />
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
-                                        <select
-                                            value={newActivity.paymentMethod}
-                                            onChange={(e) => setNewActivity({...newActivity, paymentMethod: e.target.value})}
-                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                        >
-                                            {paymentMethods.map(method => (
-                                                <option key={method} value={method}>{method}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
                                     {newActivity.duration && newActivity.rate && (
-                                        <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 p-4 rounded-2xl">
+                                        <div className="bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 p-6 rounded-2xl">
                                             <div className="flex justify-between items-center">
-                                                <span className="font-medium text-gray-700">Total Payment:</span>
-                                                <span className="text-2xl font-bold text-emerald-600">
+                                                <span className="font-semibold text-gray-700">Total Payment:</span>
+                                                <span className="text-3xl font-bold text-emerald-600">
                                                     ${(parseFloat(newActivity.duration) * newActivity.rate).toFixed(2)}
                                                 </span>
                                             </div>
+                                            {settings.taxRate > 0 && (
+                                                <div className="flex justify-between items-center text-sm text-gray-600 mt-2">
+                                                    <span>Tax ({settings.taxRate}%):</span>
+                                                    <span className="font-semibold">${((parseFloat(newActivity.duration) * newActivity.rate) * (settings.taxRate / 100)).toFixed(2)}</span>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
 
-                                <div className="flex gap-3 mt-8">
+                                <div className="flex gap-4 mt-8">
                                     <button
                                         onClick={addWorkSession}
-                                        className="flex-1 bg-gradient-to-r from-violet-500 to-purple-600 text-white px-6 py-3 rounded-2xl font-semibold hover:shadow-lg transition-all"
+                                        disabled={!newActivity.workerId || !newActivity.title || !newActivity.duration}
+                                        className="flex-1 gradient-bg text-white px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        Add to Timeline
+                                        Add Session
                                     </button>
                                     <button
                                         onClick={() => setQuickAction(null)}
-                                        className="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-2xl font-semibold hover:bg-gray-200 transition-all"
+                                        className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-bold hover:from-gray-200 hover:to-gray-300 transition-all"
                                     >
                                         Cancel
                                     </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Add Worker Modal */}
+                    {quickAction === 'worker' && (
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                            <div className="bg-white rounded-3xl p-8 w-full max-w-lg card-shadow-lg">
+                                <h3 className="text-2xl font-bold text-gray-900 mb-8 flex items-center gap-3">
+                                    <User className="w-6 h-6 text-blue-600" />
+                                    Add New Worker
+                                </h3>
+                                
+                                <div className="space-y-6">
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Full Name *</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g., Sarah Johnson"
+                                            value={newWorker.name}
+                                            onChange={(e) => setNewWorker({...newWorker, name: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Phone Number *</label>
+                                        <input
+                                            type="tel"
+                                            placeholder="(555) 123-4567"
+                                            value={newWorker.phone}
+                                            onChange={(e) => setNewWorker({...newWorker, phone: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Email</label>
+                                        <input
+                                            type="email"
+                                            placeholder="sarah@example.com"
+                                            value={newWorker.email}
+                                            onChange={(e) => setNewWorker({...newWorker, email: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Default Rate ($/hr)</label>
+                                        <input
+                                            type="number"
+                                            placeholder="20"
+                                            value={newWorker.defaultRate}
+                                            onChange={(e) => setNewWorker({...newWorker, defaultRate: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Skills (comma-separated)</label>
+                                        <input
+                                            type="text"
+                                            placeholder="Cleaning, Organization, Maintenance"
+                                            value={newWorker.skills}
+                                            onChange={(e) => setNewWorker({...newWorker, skills: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 mb-3">Notes</label>
+                                        <textarea
+                                            placeholder="Any additional notes about this worker..."
+                                            value={newWorker.notes}
+                                            onChange={(e) => setNewWorker({...newWorker, notes: e.target.value})}
+                                            className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-indigo-500 h-24 resize-none bg-white"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-4 mt-8">
+                                    <button
+                                        onClick={addWorker}
+                                        disabled={!newWorker.name || !newWorker.phone}
+                                        className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-4 rounded-2xl font-bold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Add Worker
+                                    </button>
+                                    <button
+                                        onClick={() => setQuickAction(null)}
+                                        className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-4 rounded-2xl font-bold hover:from-gray-200 hover:to-gray-300 transition-all"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Confirmation Dialog */}
+                    {confirmDelete && (
+                        <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                            <div className="bg-white rounded-3xl p-8 w-full max-w-md card-shadow-lg">
+                                <div className="text-center">
+                                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <AlertCircle className="w-8 h-8 text-red-600" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4">
+                                        Delete {confirmDelete.type === 'worker' ? 'Worker' : 'Activity'}?
+                                    </h3>
+                                    <p className="text-gray-600 mb-8">
+                                        Are you sure you want to delete <strong>{confirmDelete.name}</strong>? 
+                                        {confirmDelete.type === 'worker' && ' This will remove them from your team.'}
+                                        {confirmDelete.type === 'activity' && ' This action cannot be undone.'}
+                                    </p>
+                                    <div className="flex gap-4">
+                                        <button
+                                            onClick={() => {
+                                                if (confirmDelete.type === 'worker') {
+                                                    deleteWorker(confirmDelete.id);
+                                                } else {
+                                                    deleteActivity(confirmDelete.id);
+                                                }
+                                            }}
+                                            className="flex-1 bg-gradient-to-r from-red-500 to-red-600 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-lg transition-all"
+                                        >
+                                            Delete
+                                        </button>
+                                        <button
+                                            onClick={() => setConfirmDelete(null)}
+                                            className="flex-1 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 px-6 py-3 rounded-2xl font-bold hover:from-gray-200 hover:to-gray-300 transition-all"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -577,95 +1772,9 @@
             );
         };
 
-        const ActivityCard = ({ activity, onMarkPaid }) => {
-            const getStatusColor = () => {
-                if (activity.status === 'paid') return 'from-emerald-400 to-emerald-500';
-                if (activity.status === 'pending') return 'from-amber-400 to-orange-500';
-                return 'from-gray-400 to-gray-500';
-            };
-
-            const getCardStyle = () => {
-                if (activity.status === 'paid') return 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200';
-                if (activity.status === 'pending') return 'bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200';
-                return 'bg-white/70 border-gray-200';
-            };
-
-            return (
-                <div className={`${getCardStyle()} backdrop-blur-sm rounded-3xl p-6 border transition-all hover:shadow-lg`}>
-                    <div className="flex items-start gap-4">
-                        {/* Avatar & Status */}
-                        <div className="relative">
-                            <div className={`w-12 h-12 bg-gradient-to-br ${activity.worker?.color || 'from-gray-400 to-gray-500'} rounded-2xl flex items-center justify-center text-white text-lg`}>
-                                {activity.worker?.avatar || '👤'}
-                            </div>
-                            <div className={`absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br ${getStatusColor()} rounded-full flex items-center justify-center`}>
-                                {activity.status === 'paid' ? (
-                                    <CheckCircle className="w-3 h-3 text-white" />
-                                ) : (
-                                    <Clock className="w-3 h-3 text-white" />
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1">
-                            <div className="flex items-start justify-between mb-2">
-                                <div>
-                                    <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                                        {activity.title}
-                                        {activity.mood && <span className="text-lg">{activity.mood}</span>}
-                                    </h3>
-                                    <p className="text-gray-600">{activity.description}</p>
-                                </div>
-                                {activity.amount && (
-                                    <div className="text-right">
-                                        <p className="text-xl font-bold text-gray-900">${activity.amount}</p>
-                                        <p className="text-sm text-gray-500">{activity.paymentMethod}</p>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div className="flex items-center gap-4 text-sm text-gray-600 mb-3">
-                                <span className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4" />
-                                    {activity.time}
-                                </span>
-                                {activity.duration && (
-                                    <span className="flex items-center gap-1">
-                                        ⏱️ {activity.duration}
-                                    </span>
-                                )}
-                                {activity.location && (
-                                    <span className="flex items-center gap-1">
-                                        <MapPin className="w-4 h-4" />
-                                        {activity.location}
-                                    </span>
-                                )}
-                            </div>
-
-                            {activity.notes && (
-                                <div className="bg-white/50 rounded-2xl p-3 mb-3">
-                                    <p className="text-sm text-gray-700 italic">"{activity.notes}"</p>
-                                </div>
-                            )}
-
-                            {activity.status === 'pending' && activity.amount && (
-                                <button
-                                    onClick={() => onMarkPaid(activity.id)}
-                                    className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-xl font-medium hover:shadow-lg transition-all flex items-center gap-2"
-                                >
-                                    <DollarSign className="w-4 h-4" />
-                                    Mark as Paid
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
         // Render the app
-        ReactDOM.render(<TimelinePaymentSystem />, document.getElementById('root'));
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ProfessionalPaymentSystem />);
     </script>
 </body>
 </html>
