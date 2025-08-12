@@ -215,19 +215,28 @@ Usage: Open directly in any modern web browser
             DEBOUNCE_DELAY: 300,
             DEFAULT_CURRENCY: 'USD',
             DATE_FORMAT: 'YYYY-MM-DD',
-            SUPPORTED_EXPORT_FORMATS: ['json', 'csv']
+            SUPPORTED_EXPORT_FORMATS: ['json', 'csv'],
+            MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+            STORAGE_QUOTA_WARNING: 0.8, // Warn at 80% of localStorage quota
+            SESSION_TIMEOUT: 30 * 60 * 1000, // 30 minutes
+            MIN_PASSWORD_LENGTH: 4
         };
 
         const VALIDATION_RULES = {
             REQUIRED: (value) => value && value.toString().trim() !== '',
-            EMAIL: (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
+            EMAIL: (value) => !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
             PHONE: (value) => /^[\d\s\-\(\)\+]{10,}$/.test(value),
             NUMBER: (value) => !isNaN(parseFloat(value)) && isFinite(value),
             POSITIVE_NUMBER: (value) => VALIDATION_RULES.NUMBER(value) && parseFloat(value) > 0,
             MIN_LENGTH: (min) => (value) => value && value.length >= min,
-            MAX_LENGTH: (max) => (value) => value && value.length <= max,
+            MAX_LENGTH: (max) => (value) => !value || value.length <= max,
             FUTURE_DATE: (value) => new Date(value) >= new Date().setHours(0,0,0,0),
-            VALID_DATE: (value) => !isNaN(new Date(value).getTime())
+            VALID_DATE: (value) => !isNaN(new Date(value).getTime()),
+            PAST_OR_TODAY: (value) => new Date(value) <= new Date(),
+            RATE_RANGE: (value) => VALIDATION_RULES.POSITIVE_NUMBER(value) && parseFloat(value) <= 1000,
+            HOURS_RANGE: (value) => VALIDATION_RULES.POSITIVE_NUMBER(value) && parseFloat(value) <= 24,
+            SAFE_TEXT: (value) => !value || !/[<>]/.test(value), // Basic XSS prevention
+            NO_SCRIPT: (value) => !value || !/script/i.test(value)
         };
 
         const CATEGORIES = {
@@ -271,7 +280,120 @@ Usage: Open directly in any modern web browser
 
         const PAYMENT_METHODS = ['Cash', 'Venmo', 'PayPal', 'Zelle', 'Check', 'Credit Card', 'Bank Transfer', 'Cashapp', 'Apple Pay', 'Google Pay'];
 
-        // Custom hook for managing payment methods
+        // Password and Security Management
+        const usePasswordProtection = () => {
+            const [hasPassword, setHasPassword] = useState(false);
+            const [isAuthenticated, setIsAuthenticated] = useState(false);
+            const [sessionExpiry, setSessionExpiry] = useState(null);
+
+            // Check if password is set and session status
+            useEffect(() => {
+                const storedPassword = safeLocalStorage.getItem('securityPassword');
+                const storedSession = safeLocalStorage.getItem('securitySession');
+                
+                setHasPassword(!!storedPassword);
+                
+                if (storedSession && Date.now() < storedSession.expiry) {
+                    setIsAuthenticated(true);
+                    setSessionExpiry(storedSession.expiry);
+                } else {
+                    setIsAuthenticated(false);
+                    safeLocalStorage.removeItem('securitySession');
+                }
+            }, []);
+
+            // Auto-logout on session expiry
+            useEffect(() => {
+                if (sessionExpiry && sessionExpiry <= Date.now()) {
+                    logout();
+                }
+            }, [sessionExpiry]);
+
+            const hashPassword = (password) => {
+                // Simple hash function for basic security
+                let hash = 0;
+                for (let i = 0; i < password.length; i++) {
+                    const char = password.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32-bit integer
+                }
+                return hash.toString();
+            };
+
+            const setupPassword = (password) => {
+                if (password.length < APP_CONFIG.MIN_PASSWORD_LENGTH) {
+                    return { success: false, error: `Password must be at least ${APP_CONFIG.MIN_PASSWORD_LENGTH} characters` };
+                }
+
+                const hashedPassword = hashPassword(password);
+                const result = safeLocalStorage.setItem('securityPassword', hashedPassword);
+                
+                if (result.success) {
+                    setHasPassword(true);
+                    return { success: true };
+                } else {
+                    return { success: false, error: result.error };
+                }
+            };
+
+            const authenticate = (password) => {
+                const storedPassword = safeLocalStorage.getItem('securityPassword');
+                if (!storedPassword) {
+                    return { success: false, error: 'No password set' };
+                }
+
+                const hashedInput = hashPassword(password);
+                if (hashedInput === storedPassword) {
+                    const expiry = Date.now() + APP_CONFIG.SESSION_TIMEOUT;
+                    safeLocalStorage.setItem('securitySession', { expiry });
+                    setIsAuthenticated(true);
+                    setSessionExpiry(expiry);
+                    return { success: true };
+                } else {
+                    return { success: false, error: 'Incorrect password' };
+                }
+            };
+
+            const changePassword = (oldPassword, newPassword) => {
+                const authResult = authenticate(oldPassword);
+                if (!authResult.success) {
+                    return { success: false, error: 'Current password is incorrect' };
+                }
+
+                return setupPassword(newPassword);
+            };
+
+            const logout = () => {
+                safeLocalStorage.removeItem('securitySession');
+                setIsAuthenticated(false);
+                setSessionExpiry(null);
+            };
+
+            const requiresAuth = (operation) => {
+                return hasPassword && !isAuthenticated;
+            };
+
+            const extendSession = () => {
+                if (isAuthenticated) {
+                    const expiry = Date.now() + APP_CONFIG.SESSION_TIMEOUT;
+                    safeLocalStorage.setItem('securitySession', { expiry });
+                    setSessionExpiry(expiry);
+                }
+            };
+
+            return {
+                hasPassword,
+                isAuthenticated,
+                sessionExpiry,
+                setupPassword,
+                authenticate,
+                changePassword,
+                logout,
+                requiresAuth,
+                extendSession
+            };
+        };
+        
         const usePaymentMethods = () => {
             const [customMethods, setCustomMethods] = useLocalStorage('customPaymentMethods', []);
             
@@ -398,19 +520,29 @@ Usage: Open directly in any modern web browser
 
         // Utility Functions
         const formatCurrency = (amount, currency = APP_CONFIG.DEFAULT_CURRENCY) => {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: currency
-            }).format(amount);
+            try {
+                return new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: currency
+                }).format(amount || 0);
+            } catch (error) {
+                console.error('Currency formatting error:', error);
+                return `${(amount || 0).toFixed(2)}`;
+            }
         };
 
         const formatDate = (date, format = 'short') => {
-            const options = {
-                short: { month: 'short', day: 'numeric', year: 'numeric' },
-                long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
-                time: { hour: '2-digit', minute: '2-digit' }
-            };
-            return new Date(date).toLocaleDateString('en-US', options[format]);
+            try {
+                const options = {
+                    short: { month: 'short', day: 'numeric', year: 'numeric' },
+                    long: { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' },
+                    time: { hour: '2-digit', minute: '2-digit' }
+                };
+                return new Date(date).toLocaleDateString('en-US', options[format]);
+            } catch (error) {
+                console.error('Date formatting error:', error);
+                return date?.toString() || 'Invalid Date';
+            }
         };
 
         const debounce = (func, delay) => {
@@ -442,16 +574,97 @@ Usage: Open directly in any modern web browser
             return errors;
         };
 
+        const sanitizeInput = (input) => {
+            if (typeof input !== 'string') return input;
+            return input
+                .replace(/[<>]/g, '') // Remove potential HTML tags
+                .replace(/script/gi, '') // Remove script keywords
+                .trim();
+        };
+
         const getInitials = (name) => {
-            return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            try {
+                return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+            } catch (error) {
+                return 'UK';
+            }
         };
 
         const calculateTotalEarnings = (activities) => {
-            return activities.reduce((sum, activity) => sum + (activity.amount || 0), 0);
+            return activities.reduce((sum, activity) => sum + (parseFloat(activity.amount) || 0), 0);
         };
 
         const calculateTotalHours = (activities) => {
-            return activities.reduce((sum, activity) => sum + (activity.duration || 0), 0);
+            return activities.reduce((sum, activity) => sum + (parseFloat(activity.duration) || 0), 0);
+        };
+
+        // Enhanced localStorage management with error handling and quota monitoring
+        const safeLocalStorage = {
+            getItem: (key, defaultValue = null) => {
+                try {
+                    const item = localStorage.getItem(key);
+                    return item ? JSON.parse(item) : defaultValue;
+                } catch (error) {
+                    console.error(`Error reading ${key} from localStorage:`, error);
+                    return defaultValue;
+                }
+            },
+            
+            setItem: (key, value) => {
+                try {
+                    const stringValue = JSON.stringify(value);
+                    
+                    // Check storage quota before saving
+                    if (stringValue.length > APP_CONFIG.MAX_FILE_SIZE) {
+                        throw new Error('Data too large to store');
+                    }
+                    
+                    localStorage.setItem(key, stringValue);
+                    return { success: true };
+                } catch (error) {
+                    console.error(`Error saving ${key} to localStorage:`, error);
+                    
+                    if (error.name === 'QuotaExceededError') {
+                        return { success: false, error: 'Storage quota exceeded. Please export your data and clear some space.' };
+                    }
+                    
+                    return { success: false, error: `Failed to save data: ${error.message}` };
+                }
+            },
+            
+            removeItem: (key) => {
+                try {
+                    localStorage.removeItem(key);
+                    return { success: true };
+                } catch (error) {
+                    console.error(`Error removing ${key} from localStorage:`, error);
+                    return { success: false, error: error.message };
+                }
+            },
+            
+            getStorageInfo: () => {
+                try {
+                    let totalSize = 0;
+                    for (let key in localStorage) {
+                        if (localStorage.hasOwnProperty(key)) {
+                            totalSize += localStorage[key].length + key.length;
+                        }
+                    }
+                    
+                    // Estimate quota (most browsers allow 5-10MB)
+                    const estimatedQuota = 5 * 1024 * 1024; // 5MB
+                    const usagePercent = totalSize / estimatedQuota;
+                    
+                    return {
+                        totalSize,
+                        estimatedQuota,
+                        usagePercent,
+                        isNearLimit: usagePercent > APP_CONFIG.STORAGE_QUOTA_WARNING
+                    };
+                } catch (error) {
+                    return { error: error.message };
+                }
+            }
         };
 
         const groupActivitiesByDate = (activities) => {
@@ -572,25 +785,14 @@ Usage: Open directly in any modern web browser
         // Custom Hooks
         const useLocalStorage = (key, defaultValue) => {
             const [value, setValue] = useState(() => {
-                try {
-                    const item = localStorage.getItem(key);
-                    return item ? JSON.parse(item) : defaultValue;
-                } catch (error) {
-                    console.error(`Error loading ${key} from localStorage:`, error);
-                    return defaultValue;
-                }
+                return safeLocalStorage.getItem(key, defaultValue);
             });
 
             const setStoredValue = useCallback((newValue) => {
-                try {
-                    const valueToStore = typeof newValue === 'function' ? newValue(value) : newValue;
-                    setValue(valueToStore);
-                    localStorage.setItem(key, JSON.stringify(valueToStore));
-                    return true;
-                } catch (error) {
-                    console.error(`Error saving ${key} to localStorage:`, error);
-                    return false;
-                }
+                const valueToStore = typeof newValue === 'function' ? newValue(value) : newValue;
+                setValue(valueToStore);
+                const result = safeLocalStorage.setItem(key, valueToStore);
+                return result;
             }, [key, value]);
 
             return [value, setStoredValue];
@@ -788,10 +990,16 @@ Usage: Open directly in any modern web browser
             </svg>
         ));
 
+        const Shield = memo((props) => (
+            <svg {...iconProps} {...props} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+        ));
+
         const ICON_MAP = {
             Plus, Clock, CheckCircle, DollarSign, User, Calendar, Home, Star, MapPin, BarChart,
             FileText, Settings, Download, Search, Bell, Printer, Trash, Edit, AlertCircle,
-            Save, X, Info, Code, Monitor
+            Save, X, Info, Code, Monitor, Shield
         };
 
         // Payment Method Select Component
@@ -915,40 +1123,79 @@ Usage: Open directly in any modern web browser
             success, 
             tooltip, 
             required, 
-            className = "", 
+            className = "",
+            onBlur,
+            validate,
             ...props 
-        }) => (
-            <div className={className}>
-                <label className="block text-sm font-semibold text-gray-700 mb-3">
-                    {label}
-                    {required && <span className="text-red-500 ml-1">*</span>}
-                    {tooltip && (
-                        <span className="tooltip ml-2">
-                            <Info className="w-4 h-4 text-gray-400 inline" />
-                            <span className="tooltip-text">{tooltip}</span>
-                        </span>
-                    )}
-                </label>
-                <input
-                    className={`w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 transition-all bg-white focus-visible:focus ${
-                        error 
-                            ? 'error-input' 
-                            : success 
-                            ? 'success-input'
-                            : 'border-gray-200 focus:ring-indigo-500 focus:border-transparent'
-                    }`}
-                    {...props}
-                />
-                {error && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    {error}
-                </p>}
-                {success && <p className="text-green-500 text-sm mt-2 flex items-center gap-1">
-                    <CheckCircle className="w-4 h-4" />
-                    {success}
-                </p>}
-            </div>
-        ));
+        }) => {
+            const [touched, setTouched] = useState(false);
+            const [localError, setLocalError] = useState('');
+
+            const handleBlur = useCallback((e) => {
+                setTouched(true);
+                
+                if (validate) {
+                    const validationError = validate(e.target.value);
+                    setLocalError(validationError || '');
+                }
+                
+                if (onBlur) {
+                    onBlur(e);
+                }
+            }, [validate, onBlur]);
+
+            const handleChange = useCallback((e) => {
+                // Sanitize input
+                const sanitizedValue = sanitizeInput(e.target.value);
+                e.target.value = sanitizedValue;
+                
+                if (touched && validate) {
+                    const validationError = validate(sanitizedValue);
+                    setLocalError(validationError || '');
+                }
+                
+                if (props.onChange) {
+                    props.onChange(e);
+                }
+            }, [touched, validate, props.onChange]);
+
+            const displayError = error || localError;
+
+            return (
+                <div className={className}>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">
+                        {label}
+                        {required && <span className="text-red-500 ml-1">*</span>}
+                        {tooltip && (
+                            <span className="tooltip ml-2">
+                                <Info className="w-4 h-4 text-gray-400 inline" />
+                                <span className="tooltip-text">{tooltip}</span>
+                            </span>
+                        )}
+                    </label>
+                    <input
+                        className={`w-full px-4 py-3 border rounded-2xl focus:outline-none focus:ring-2 transition-all bg-white focus-visible:focus ${
+                            displayError 
+                                ? 'error-input' 
+                                : success 
+                                ? 'success-input'
+                                : 'border-gray-200 focus:ring-indigo-500 focus:border-transparent'
+                        }`}
+                        onBlur={handleBlur}
+                        onChange={handleChange}
+                        {...props}
+                    />
+                    {displayError && <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                        <AlertCircle className="w-4 h-4" />
+                        {displayError}
+                    </p>}
+                    {success && <p className="text-green-500 text-sm mt-2 flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" />
+                        {success}
+                    </p>}
+                </div>
+            );
+        });
 
         const LoadingSpinner = memo(({ size = 'md', className = '' }) => {
             const sizeClasses = {
@@ -1109,6 +1356,274 @@ Usage: Open directly in any modern web browser
             return children;
         };
 
+        // Password Modal Components
+        const PasswordSetupModal = memo(({ isOpen, onClose, onSetup }) => {
+            const [password, setPassword] = useState('');
+            const [confirmPassword, setConfirmPassword] = useState('');
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const handleSubmit = async () => {
+                setError('');
+                setLoading(true);
+
+                if (password.length < APP_CONFIG.MIN_PASSWORD_LENGTH) {
+                    setError(`Password must be at least ${APP_CONFIG.MIN_PASSWORD_LENGTH} characters`);
+                    setLoading(false);
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    setError('Passwords do not match');
+                    setLoading(false);
+                    return;
+                }
+
+                const result = onSetup(password);
+                if (result.success) {
+                    setPassword('');
+                    setConfirmPassword('');
+                    onClose();
+                } else {
+                    setError(result.error || 'Failed to set password');
+                }
+                setLoading(false);
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Setup Password Protection" size="sm">
+                    <div className="space-y-6">
+                        <div className="bg-blue-50 rounded-xl p-4">
+                            <p className="text-sm text-blue-800">
+                                Setting up a password will protect your worker management functions. 
+                                You'll need to enter this password to add, edit, or remove workers.
+                            </p>
+                        </div>
+
+                        <FormInput
+                            label="New Password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            required
+                        />
+
+                        <FormInput
+                            label="Confirm Password"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm your password"
+                            required
+                        />
+
+                        {error && (
+                            <div className="bg-red-100 border border-red-200 rounded-xl p-3">
+                                <p className="text-sm text-red-700 flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {error}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-4">
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={!password || !confirmPassword || loading}
+                                loading={loading}
+                                className="flex-1"
+                            >
+                                <Shield className="w-5 h-5" />
+                                Setup Password
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                onClick={onClose}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        });
+
+        const PasswordAuthModal = memo(({ isOpen, onClose, onAuthenticate, operation }) => {
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const handleSubmit = async () => {
+                setError('');
+                setLoading(true);
+
+                const result = onAuthenticate(password);
+                if (result.success) {
+                    setPassword('');
+                    onClose();
+                } else {
+                    setError(result.error || 'Incorrect password');
+                }
+                setLoading(false);
+            };
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && password) {
+                    handleSubmit();
+                }
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Authentication Required" size="sm">
+                    <div className="space-y-6">
+                        <div className="bg-amber-50 rounded-xl p-4">
+                            <p className="text-sm text-amber-800">
+                                Please enter your password to {operation || 'continue'}.
+                            </p>
+                        </div>
+
+                        <FormInput
+                            label="Password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Enter your password"
+                            required
+                            autoFocus
+                        />
+
+                        {error && (
+                            <div className="bg-red-100 border border-red-200 rounded-xl p-3">
+                                <p className="text-sm text-red-700 flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {error}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-4">
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={!password || loading}
+                                loading={loading}
+                                className="flex-1"
+                            >
+                                <Shield className="w-5 h-5" />
+                                Authenticate
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                onClick={onClose}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        });
+
+        const PasswordChangeModal = memo(({ isOpen, onClose, onChangePassword }) => {
+            const [oldPassword, setOldPassword] = useState('');
+            const [newPassword, setNewPassword] = useState('');
+            const [confirmPassword, setConfirmPassword] = useState('');
+            const [error, setError] = useState('');
+            const [loading, setLoading] = useState(false);
+
+            const handleSubmit = async () => {
+                setError('');
+                setLoading(true);
+
+                if (newPassword.length < APP_CONFIG.MIN_PASSWORD_LENGTH) {
+                    setError(`New password must be at least ${APP_CONFIG.MIN_PASSWORD_LENGTH} characters`);
+                    setLoading(false);
+                    return;
+                }
+
+                if (newPassword !== confirmPassword) {
+                    setError('New passwords do not match');
+                    setLoading(false);
+                    return;
+                }
+
+                const result = onChangePassword(oldPassword, newPassword);
+                if (result.success) {
+                    setOldPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    onClose();
+                } else {
+                    setError(result.error || 'Failed to change password');
+                }
+                setLoading(false);
+            };
+
+            return (
+                <Modal isOpen={isOpen} onClose={onClose} title="Change Password" size="sm">
+                    <div className="space-y-6">
+                        <FormInput
+                            label="Current Password"
+                            type="password"
+                            value={oldPassword}
+                            onChange={(e) => setOldPassword(e.target.value)}
+                            placeholder="Enter current password"
+                            required
+                        />
+
+                        <FormInput
+                            label="New Password"
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Enter new password"
+                            required
+                        />
+
+                        <FormInput
+                            label="Confirm New Password"
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm new password"
+                            required
+                        />
+
+                        {error && (
+                            <div className="bg-red-100 border border-red-200 rounded-xl p-3">
+                                <p className="text-sm text-red-700 flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4" />
+                                    {error}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="flex gap-4">
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={!oldPassword || !newPassword || !confirmPassword || loading}
+                                loading={loading}
+                                className="flex-1"
+                            >
+                                <Shield className="w-5 h-5" />
+                                Change Password
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                onClick={onClose}
+                                className="flex-1"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            );
+        });
+
         // Main Application Component
         const ProfessionalPaymentSystem = () => {
             // Core State Management
@@ -1140,7 +1655,179 @@ Usage: Open directly in any modern web browser
             // Payment method management
             const { allMethods: paymentMethods, addCustomMethod } = usePaymentMethods();
 
-            // Form State
+            // Password protection
+            const {
+                hasPassword,
+                isAuthenticated,
+                sessionExpiry,
+                setupPassword,
+                authenticate,
+                changePassword,
+                logout,
+                requiresAuth,
+                extendSession
+            } = usePasswordProtection();
+
+            // Password modal states
+            const [showPasswordSetup, setShowPasswordSetup] = useState(false);
+            const [showPasswordAuth, setShowPasswordAuth] = useState(false);
+            const [showPasswordChange, setShowPasswordChange] = useState(false);
+            const [pendingOperation, setPendingOperation] = useState(null);
+
+            // Check for first-time password setup
+            useEffect(() => {
+                if (!hasPassword) {
+                    const hasWorkers = workers.length > 0;
+                    if (hasWorkers) {
+                        // Show password setup if they have workers but no password
+                        setShowPasswordSetup(true);
+                    }
+                }
+            }, [hasPassword, workers.length]);
+
+            // Extend session on user activity
+            useEffect(() => {
+                const handleActivity = () => {
+                    if (isAuthenticated) {
+                        extendSession();
+                    }
+                };
+
+                const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+                events.forEach(event => {
+                    document.addEventListener(event, handleActivity, true);
+                });
+
+                return () => {
+                    events.forEach(event => {
+                        document.removeEventListener(event, handleActivity, true);
+                    });
+                };
+            }, [isAuthenticated, extendSession]);
+
+            // Protected operation handler
+            const handleProtectedOperation = useCallback((operation, operationName) => {
+                if (requiresAuth(operationName)) {
+                    setPendingOperation({ operation, operationName });
+                    setShowPasswordAuth(true);
+                } else {
+                    operation();
+                }
+            }, [requiresAuth]);
+
+            // Handle successful authentication
+            const handleAuthSuccess = useCallback(() => {
+                if (pendingOperation) {
+                    pendingOperation.operation();
+                    setPendingOperation(null);
+                }
+                setShowPasswordAuth(false);
+            }, [pendingOperation]);
+
+            // Password setup handler
+            const handlePasswordSetup = useCallback((password) => {
+                const result = setupPassword(password);
+                if (result.success) {
+                    addNotification('success', 'Security Enabled', 'Password protection is now active for worker management');
+                    setShowPasswordSetup(false);
+                }
+                return result;
+            }, [setupPassword, addNotification]);
+
+            // Password authentication handler
+            const handlePasswordAuth = useCallback((password) => {
+                const result = authenticate(password);
+                if (result.success) {
+                    handleAuthSuccess();
+                    addNotification('success', 'Authenticated', 'You are now logged in');
+                }
+                return result;
+            }, [authenticate, handleAuthSuccess, addNotification]);
+
+            // Password change handler
+            const handlePasswordChange = useCallback((oldPassword, newPassword) => {
+                const result = changePassword(oldPassword, newPassword);
+                if (result.success) {
+                    addNotification('success', 'Password Changed', 'Your password has been updated successfully');
+                    setShowPasswordChange(false);
+                }
+                return result;
+            }, [changePassword, addNotification]);
+
+            // Form validation
+            const [formErrors, setFormErrors] = useState({});
+
+            // Comprehensive form validation
+            const validateWorkSession = useCallback((data) => {
+                const errors = {};
+                
+                if (!data.workerId) {
+                    errors.workerId = 'Please select a worker';
+                }
+                
+                if (!VALIDATION_RULES.REQUIRED(data.title)) {
+                    errors.title = 'Service title is required';
+                } else if (!VALIDATION_RULES.MAX_LENGTH(100)(data.title)) {
+                    errors.title = 'Title must be less than 100 characters';
+                } else if (!VALIDATION_RULES.SAFE_TEXT(data.title)) {
+                    errors.title = 'Title contains invalid characters';
+                }
+                
+                if (!VALIDATION_RULES.REQUIRED(data.duration)) {
+                    errors.duration = 'Duration is required';
+                } else if (!VALIDATION_RULES.HOURS_RANGE(data.duration)) {
+                    errors.duration = 'Duration must be between 0.25 and 24 hours';
+                }
+                
+                if (data.rate && !VALIDATION_RULES.RATE_RANGE(data.rate)) {
+                    errors.rate = 'Rate must be between $1 and $1000 per hour';
+                }
+                
+                if (data.description && !VALIDATION_RULES.MAX_LENGTH(500)(data.description)) {
+                    errors.description = 'Description must be less than 500 characters';
+                }
+                
+                if (data.scheduledDate && !VALIDATION_RULES.PAST_OR_TODAY(data.scheduledDate)) {
+                    errors.scheduledDate = 'Date cannot be in the future for completed work';
+                }
+                
+                return errors;
+            }, []);
+
+            const validateWorker = useCallback((data) => {
+                const errors = {};
+                
+                if (!VALIDATION_RULES.REQUIRED(data.name)) {
+                    errors.name = 'Name is required';
+                } else if (!VALIDATION_RULES.MIN_LENGTH(2)(data.name)) {
+                    errors.name = 'Name must be at least 2 characters';
+                } else if (!VALIDATION_RULES.MAX_LENGTH(50)(data.name)) {
+                    errors.name = 'Name must be less than 50 characters';
+                } else if (!VALIDATION_RULES.SAFE_TEXT(data.name)) {
+                    errors.name = 'Name contains invalid characters';
+                }
+                
+                if (!VALIDATION_RULES.REQUIRED(data.phone)) {
+                    errors.phone = 'Phone number is required';
+                } else if (!VALIDATION_RULES.PHONE(data.phone)) {
+                    errors.phone = 'Please enter a valid phone number';
+                }
+                
+                if (data.email && !VALIDATION_RULES.EMAIL(data.email)) {
+                    errors.email = 'Please enter a valid email address';
+                }
+                
+                if (data.defaultRate && !VALIDATION_RULES.RATE_RANGE(data.defaultRate)) {
+                    errors.defaultRate = 'Rate must be between $1 and $1000 per hour';
+                }
+                
+                if (data.notes && !VALIDATION_RULES.MAX_LENGTH(500)(data.notes)) {
+                    errors.notes = 'Notes must be less than 500 characters';
+                }
+                
+                return errors;
+            }, []);
+            
             const [newActivity, setNewActivity] = useState(() => ({
                 workerId: '',
                 title: '',
@@ -1172,7 +1859,138 @@ Usage: Open directly in any modern web browser
                 notes: ''
             });
 
-            // Auto-backup with Error Handling
+            // Keyboard shortcuts and UX enhancements
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    // Prevent shortcuts when typing in inputs
+                    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+                        // Only allow Escape in inputs
+                        if (e.key === 'Escape') {
+                            e.target.blur();
+                        }
+                        return;
+                    }
+
+                    // Ctrl/Cmd + N for new work session
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'n' && !quickAction) {
+                        e.preventDefault();
+                        setQuickAction('work');
+                    }
+                    
+                    // Ctrl/Cmd + U for new worker  
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'u' && !quickAction) {
+                        e.preventDefault();
+                        if (requiresAuth('add worker')) {
+                            setPendingOperation({ 
+                                operation: () => setQuickAction('worker'), 
+                                operationName: 'add worker' 
+                            });
+                            setShowPasswordAuth(true);
+                        } else {
+                            setQuickAction('worker');
+                        }
+                    }
+                    
+                    // Ctrl/Cmd + E for export
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                        e.preventDefault();
+                        try {
+                            const csvData = filteredActivities.map(a => {
+                                const worker = workers.find(w => w.id === a.workerId);
+                                return {
+                                    'Date': a.date,
+                                    'Time': a.time,
+                                    'Worker': worker?.name || 'Unknown',
+                                    'Title': a.title,
+                                    'Description': a.description,
+                                    'Category': CATEGORIES[a.category]?.label || a.category,
+                                    'Hours': a.duration,
+                                    'Hourly Rate': formatCurrency(a.hourlyRate),
+                                    'Amount': formatCurrency(a.amount),
+                                    'Status': a.status,
+                                    'Payment Method': a.paymentMethod,
+                                    'Location': a.location,
+                                    'Quality': a.quality,
+                                    'Invoice Number': a.invoiceNumber,
+                                    'Notes': a.notes || ''
+                                };
+                            });
+                            
+                            if (csvData.length > 0) {
+                                exportData(csvData, 'csv', 'servicepro-report');
+                                addNotification('success', 'Export Complete', 'Data exported as CSV file');
+                            } else {
+                                addNotification('error', 'No Data', 'No activities to export');
+                            }
+                        } catch (error) {
+                            console.error('Export error:', error);
+                            addNotification('error', 'Export Failed', 'Failed to export data. Please try again.');
+                        }
+                    }
+
+                    // Ctrl/Cmd + ? for help
+                    if ((e.ctrlKey || e.metaKey) && (e.key === '?' || e.key === '/')) {
+                        e.preventDefault();
+                        setQuickAction('shortcuts');
+                    }
+                    
+                    // Escape to close modals
+                    if (e.key === 'Escape') {
+                        if (quickAction) setQuickAction(null);
+                        if (editingActivity) setEditingActivity(null);
+                        if (editingWorker) setEditingWorker(null);
+                        if (confirmDelete) setConfirmDelete(null);
+                    }
+                    
+                    // Ctrl/Cmd + 1-4 for navigation
+                    if ((e.ctrlKey || e.metaKey) && ['1', '2', '3', '4'].includes(e.key)) {
+                        e.preventDefault();
+                        const views = ['timeline', 'analytics', 'workers', 'settings'];
+                        setCurrentView(views[parseInt(e.key) - 1]);
+                    }
+                };
+
+                document.addEventListener('keydown', handleKeyDown);
+                return () => document.removeEventListener('keydown', handleKeyDown);
+            }, [quickAction, editingActivity, editingWorker, confirmDelete, requiresAuth]);
+
+            // Auto-save draft functionality
+            useEffect(() => {
+                if (newActivity.title || newActivity.description || newActivity.duration) {
+                    const draft = { ...newActivity, timestamp: Date.now() };
+                    safeLocalStorage.setItem('workSessionDraft', draft);
+                }
+            }, [newActivity]);
+
+            useEffect(() => {
+                if (newWorker.name || newWorker.phone || newWorker.email) {
+                    const draft = { ...newWorker, timestamp: Date.now() };
+                    safeLocalStorage.setItem('workerDraft', draft);
+                }
+            }, [newWorker]);
+
+            // Load drafts on mount
+            useEffect(() => {
+                const workSessionDraft = safeLocalStorage.getItem('workSessionDraft');
+                const workerDraft = safeLocalStorage.getItem('workerDraft');
+                
+                if (workSessionDraft && Date.now() - workSessionDraft.timestamp < 24 * 60 * 60 * 1000) { // 24 hours
+                    const shouldRestore = window.confirm('You have an unsaved work session draft. Would you like to restore it?');
+                    if (shouldRestore) {
+                        delete workSessionDraft.timestamp;
+                        setNewActivity(workSessionDraft);
+                    }
+                }
+                
+                if (workerDraft && Date.now() - workerDraft.timestamp < 24 * 60 * 60 * 1000) { // 24 hours
+                    const shouldRestore = window.confirm('You have an unsaved worker draft. Would you like to restore it?');
+                    if (shouldRestore) {
+                        delete workerDraft.timestamp;
+                        setNewWorker(workerDraft);
+                    }
+                }
+            }, []);
+            
             useEffect(() => {
                 if (settings.autoBackup) {
                     const backupData = () => {
@@ -1252,9 +2070,14 @@ Usage: Open directly in any modern web browser
                 if (isLoading) return;
                 
                 setIsLoading(true);
+                setFormErrors({});
+                
                 try {
-                    if (!newActivity.workerId || !newActivity.title || !newActivity.duration) {
-                        addNotification('error', 'Validation Error', 'Please fill in all required fields');
+                    // Comprehensive validation
+                    const validationErrors = validateWorkSession(newActivity);
+                    if (Object.keys(validationErrors).length > 0) {
+                        setFormErrors(validationErrors);
+                        addNotification('error', 'Validation Error', 'Please fix the errors below');
                         return;
                     }
 
@@ -1264,8 +2087,25 @@ Usage: Open directly in any modern web browser
                         return;
                     }
 
+                    // Check for potential duplicates
+                    const duplicateCheck = activities.find(a => 
+                        a.workerId == newActivity.workerId &&
+                        a.title.toLowerCase() === newActivity.title.toLowerCase() &&
+                        a.date === newActivity.scheduledDate &&
+                        Math.abs(parseFloat(a.duration) - parseFloat(newActivity.duration)) < 0.1
+                    );
+
+                    if (duplicateCheck) {
+                        const confirmDuplicate = window.confirm(
+                            'A similar work session already exists. Do you want to add it anyway?'
+                        );
+                        if (!confirmDuplicate) {
+                            return;
+                        }
+                    }
+
                     const hours = parseFloat(newActivity.duration);
-                    const rate = newActivity.rate || worker.defaultRate;
+                    const rate = parseFloat(newActivity.rate) || worker.defaultRate;
                     const amount = Math.round((hours * rate) * 100) / 100;
                     const taxAmount = Math.round((amount * (settings.taxRate / 100)) * 100) / 100;
 
@@ -1273,54 +2113,68 @@ Usage: Open directly in any modern web browser
                         id: generateId(),
                         type: 'work_completed',
                         workerId: worker.id,
-                        title: newActivity.title.trim(),
-                        description: newActivity.description.trim(),
+                        title: sanitizeInput(newActivity.title.trim()),
+                        description: sanitizeInput(newActivity.description.trim()),
                         date: newActivity.scheduledDate || new Date().toISOString().split('T')[0],
                         time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
                         duration: hours,
                         hourlyRate: rate,
                         amount: amount,
                         status: 'pending',
-                        paymentMethod: newActivity.paymentMethod,
-                        location: newActivity.location,
+                        paymentMethod: newActivity.paymentMethod || 'Cash',
+                        location: sanitizeInput(newActivity.location || ''),
                         category: newActivity.category,
-                        quality: newActivity.quality,
-                        notes: newActivity.description.trim(),
+                        quality: Math.max(1, Math.min(5, parseInt(newActivity.quality) || 5)),
+                        notes: sanitizeInput(newActivity.description.trim()),
                         invoiceNumber: `${settings.invoicePrefix}-${String(settings.nextInvoiceNumber).padStart(3, '0')}`,
                         taxAmount: taxAmount,
                         photos: [],
                         createdAt: new Date().toISOString()
                     };
 
-                    const success = setActivities([activity, ...activities]);
-                    if (success) {
-                        setSettings({...settings, nextInvoiceNumber: settings.nextInvoiceNumber + 1});
-                        setNewActivity({
-                            workerId: '',
-                            title: '',
-                            description: '',
-                            duration: '',
-                            rate: 0,
-                            location: '',
-                            paymentMethod: paymentMethods[0] || 'Cash',
-                            category: 'webdev',
-                            quality: 5,
-                            scheduledDate: new Date().toISOString().split('T')[0],
-                            isRecurring: false,
-                            recurringPattern: 'weekly'
-                        });
-                        setQuickAction(null);
-                        addNotification('success', 'Work Session Added', `Successfully recorded work session for ${worker.name}`);
-                    } else {
-                        addNotification('error', 'Save Failed', 'Failed to save work session. Please try again.');
+                    // Check storage before saving
+                    const storageInfo = safeLocalStorage.getStorageInfo();
+                    if (storageInfo.isNearLimit) {
+                        addNotification('warning', 'Storage Warning', 'Storage is getting full. Consider exporting your data.');
                     }
+
+                    const result = setActivities([activity, ...activities]);
+                    if (!result.success) {
+                        addNotification('error', 'Save Failed', result.error || 'Failed to save work session');
+                        return;
+                    }
+
+                    const settingsResult = setSettings({...settings, nextInvoiceNumber: settings.nextInvoiceNumber + 1});
+                    if (!settingsResult.success) {
+                        console.warn('Failed to update invoice number:', settingsResult.error);
+                    }
+
+                    // Reset form
+                    setNewActivity({
+                        workerId: '',
+                        title: '',
+                        description: '',
+                        duration: '',
+                        rate: 0,
+                        location: '',
+                        paymentMethod: paymentMethods[0] || 'Cash',
+                        category: 'webdev',
+                        quality: 5,
+                        scheduledDate: new Date().toISOString().split('T')[0],
+                        isRecurring: false,
+                        recurringPattern: 'weekly'
+                    });
+                    setFormErrors({});
+                    setQuickAction(null);
+                    addNotification('success', 'Work Session Added', `Successfully recorded work session for ${worker.name}`);
+                    
                 } catch (error) {
                     console.error('Error adding work session:', error);
                     addNotification('error', 'Unexpected Error', 'An unexpected error occurred. Please try again.');
                 } finally {
                     setIsLoading(false);
                 }
-            }, [newActivity, workers, settings, activities, isLoading, addNotification, setActivities, setSettings]);
+            }, [newActivity, workers, settings, activities, isLoading, addNotification, setActivities, setSettings, validateWorkSession, paymentMethods]);
 
             const markAsPaid = useCallback((activityId) => {
                 try {
@@ -1375,64 +2229,85 @@ Usage: Open directly in any modern web browser
                 if (isLoading) return;
                 
                 setIsLoading(true);
+                setFormErrors({});
+                
                 try {
-                    if (!newWorker.name || !newWorker.phone) {
-                        addNotification('error', 'Validation Error', 'Please fill in all required fields');
+                    // Comprehensive validation
+                    const validationErrors = validateWorker(newWorker);
+                    if (Object.keys(validationErrors).length > 0) {
+                        setFormErrors(validationErrors);
+                        addNotification('error', 'Validation Error', 'Please fix the errors below');
                         return;
                     }
 
-                    // Check for duplicates
+                    // Check for duplicates with better matching
                     const existingWorker = workers.find(w => 
-                        w.name.toLowerCase() === newWorker.name.toLowerCase() || 
-                        w.phone === newWorker.phone ||
+                        w.name.toLowerCase().trim() === newWorker.name.toLowerCase().trim() || 
+                        w.phone.replace(/\D/g, '') === newWorker.phone.replace(/\D/g, '') ||
                         (newWorker.email && w.email && w.email.toLowerCase() === newWorker.email.toLowerCase())
                     );
 
                     if (existingWorker) {
-                        addNotification('error', 'Duplicate Worker', 'A worker with this name, phone, or email already exists');
+                        const duplicateType = existingWorker.name.toLowerCase() === newWorker.name.toLowerCase() 
+                            ? 'name' 
+                            : existingWorker.phone.replace(/\D/g, '') === newWorker.phone.replace(/\D/g, '')
+                            ? 'phone number'
+                            : 'email address';
+                        
+                        addNotification('error', 'Duplicate Worker', `A worker with this ${duplicateType} already exists`);
+                        return;
+                    }
+
+                    // Check worker limit
+                    if (workers.length >= APP_CONFIG.MAX_WORKERS) {
+                        addNotification('error', 'Worker Limit Reached', `Maximum of ${APP_CONFIG.MAX_WORKERS} workers allowed`);
                         return;
                     }
 
                     const worker = {
                         id: generateId(),
-                        name: newWorker.name.trim(),
+                        name: sanitizeInput(newWorker.name.trim()),
                         initials: getInitials(newWorker.name.trim()),
-                        skills: newWorker.skills.split(',').map(s => s.trim()).filter(s => s),
-                        defaultRate: parseFloat(newWorker.defaultRate) || 25,
+                        skills: newWorker.skills.split(',').map(s => sanitizeInput(s.trim())).filter(s => s),
+                        defaultRate: Math.max(1, Math.min(1000, parseFloat(newWorker.defaultRate) || 25)),
                         color: WORKER_COLORS[workers.length % WORKER_COLORS.length],
                         phone: newWorker.phone.trim(),
-                        email: newWorker.email.trim(),
+                        email: sanitizeInput(newWorker.email.trim()),
                         joinDate: new Date().toISOString().split('T')[0],
                         rating: 5,
                         totalEarnings: 0,
                         totalHours: 0,
                         isActive: true,
-                        notes: newWorker.notes.trim(),
+                        notes: sanitizeInput(newWorker.notes.trim()),
                         createdAt: new Date().toISOString()
                     };
 
-                    const success = setWorkers([...workers, worker]);
-                    if (success) {
-                        setNewWorker({
-                            name: '',
-                            phone: '',
-                            email: '',
-                            skills: '',
-                            defaultRate: 25,
-                            notes: ''
-                        });
-                        setQuickAction(null);
-                        addNotification('success', 'Worker Added', `Successfully added ${worker.name} to your team`);
-                    } else {
-                        addNotification('error', 'Save Failed', 'Failed to save worker. Please try again.');
+                    const result = setWorkers([...workers, worker]);
+                    if (!result.success) {
+                        addNotification('error', 'Save Failed', result.error || 'Failed to save worker');
+                        return;
                     }
+
+                    // Reset form
+                    setNewWorker({
+                        name: '',
+                        phone: '',
+                        email: '',
+                        skills: '',
+                        defaultRate: 25,
+                        notes: ''
+                    });
+                    setFormErrors({});
+                    setQuickAction(null);
+                    addNotification('success', 'Worker Added', `Successfully added ${worker.name} to your team`);
+                    
                 } catch (error) {
                     console.error('Error adding worker:', error);
                     addNotification('error', 'Unexpected Error', 'An unexpected error occurred. Please try again.');
                 } finally {
                     setIsLoading(false);
                 }
-            }, [newWorker, workers, isLoading, addNotification, setWorkers]);
+            }, [newWorker, workers, isLoading, addNotification, setWorkers, validateWorker]);
 
             const updateWorker = useCallback(async () => {
                 if (isLoading || !editingWorker) return;
@@ -1489,22 +2364,22 @@ Usage: Open directly in any modern web browser
 
                     const updatedActivity = {
                         ...editingActivity,
-                        title: editingActivity.title.trim(),
-                        description: editingActivity.description.trim(),
+                        title: sanitizeInput(editingActivity.title.trim()),
+                        description: sanitizeInput(editingActivity.description.trim()),
                         duration: hours,
                         amount: amount,
-                        notes: editingActivity.notes?.trim() || editingActivity.description.trim()
+                        notes: sanitizeInput(editingActivity.notes?.trim() || editingActivity.description.trim())
                     };
 
-                    const success = setActivities(activities.map(a => 
+                    const result = setActivities(activities.map(a => 
                         a.id === editingActivity.id ? updatedActivity : a
                     ));
 
-                    if (success) {
+                    if (result.success) {
                         setEditingActivity(null);
                         addNotification('success', 'Activity Updated', `Successfully updated "${updatedActivity.title}"`);
                     } else {
-                        addNotification('error', 'Update Failed', 'Failed to update activity. Please try again.');
+                        addNotification('error', 'Update Failed', result.error || 'Failed to update activity');
                     }
                 } catch (error) {
                     console.error('Error updating activity:', error);
@@ -1528,19 +2403,46 @@ Usage: Open directly in any modern web browser
                         return;
                     }
 
-                    const success = setWorkers(workers.filter(w => w.id !== workerId));
+                    const result = setWorkers(workers.filter(w => w.id !== workerId));
                     
-                    if (success) {
+                    if (result.success) {
                         setConfirmDelete(null);
                         addNotification('success', 'Worker Removed', `Removed ${worker.name} from your team`);
                     } else {
-                        addNotification('error', 'Delete Failed', 'Failed to remove worker');
+                        addNotification('error', 'Delete Failed', result.error || 'Failed to remove worker');
                     }
                 } catch (error) {
                     console.error('Error deleting worker:', error);
                     addNotification('error', 'Unexpected Error', 'Failed to remove worker');
                 }
             }, [workers, activities, addNotification, setWorkers]);
+
+            const addWorkerProtected = useCallback(() => {
+                handleProtectedOperation(addWorker, 'add worker');
+            }, [handleProtectedOperation, addWorker]);
+
+            const updateWorkerProtected = useCallback(() => {
+                handleProtectedOperation(updateWorker, 'edit worker');
+            }, [handleProtectedOperation, updateWorker]);
+
+            const deleteWorkerProtected = useCallback((workerId) => {
+                handleProtectedOperation(() => deleteWorker(workerId), 'delete worker');
+            }, [handleProtectedOperation, deleteWorker]);
+
+            const editWorkerProtected = useCallback((worker) => {
+                handleProtectedOperation(() => setEditingWorker({
+                    ...worker,
+                    skills: worker.skills.join(', ')
+                }), 'edit worker');
+            }, [handleProtectedOperation]);
+
+            const toggleWorkerStatusProtected = useCallback((workerId) => {
+                handleProtectedOperation(() => {
+                    setWorkers(workers.map(w => 
+                        w.id === workerId ? {...w, isActive: !w.isActive} : w
+                    ));
+                }, 'change worker status');
+            }, [handleProtectedOperation, workers, setWorkers]);
 
             // Export Functionality
             const handleExportData = useCallback((format) => {
@@ -2107,13 +3009,32 @@ Usage: Open directly in any modern web browser
                 <div className="space-y-8">
                     <Card className="p-8">
                         <div className="flex items-center justify-between mb-8">
-                            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                                <User className="w-6 h-6 text-indigo-600" />
-                                Team Members ({workers.length} total, {activeWorkers.length} active)
-                            </h3>
-                            <Button onClick={() => setQuickAction('worker')}>
+                            <div>
+                                <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                                    <User className="w-6 h-6 text-indigo-600" />
+                                    Team Members ({workers.length} total, {activeWorkers.length} active)
+                                    {hasPassword && (
+                                        <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-normal">
+                                            Protected
+                                        </span>
+                                    )}
+                                </h3>
+                                {hasPassword && !isAuthenticated && (
+                                    <p className="text-sm text-amber-600 mt-2 flex items-center gap-2">
+                                        <Shield className="w-4 h-4" />
+                                        Authentication required to manage workers
+                                    </p>
+                                )}
+                            </div>
+                            <Button 
+                                onClick={() => handleProtectedOperation(() => setQuickAction('worker'), 'add worker')}
+                                className="relative"
+                            >
                                 <Plus className="w-5 h-5" />
                                 Add Worker
+                                {hasPassword && !isAuthenticated && (
+                                    <Shield className="w-4 h-4 ml-2 text-white/70" />
+                                )}
                             </Button>
                         </div>
                         
@@ -2192,30 +3113,37 @@ Usage: Open directly in any modern web browser
                                                     <Button
                                                         variant="secondary"
                                                         size="sm"
-                                                        onClick={() => setEditingWorker({
-                                                            ...worker,
-                                                            skills: worker.skills.join(', ')
-                                                        })}
+                                                        onClick={() => editWorkerProtected(worker)}
+                                                        className="relative"
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                         Edit
+                                                        {hasPassword && !isAuthenticated && (
+                                                            <Shield className="w-3 h-3 ml-1 text-gray-400" />
+                                                        )}
                                                     </Button>
                                                     <Button
                                                         variant={worker.isActive ? "secondary" : "success"}
                                                         size="sm"
-                                                        onClick={() => setWorkers(workers.map(w => 
-                                                            w.id === worker.id ? {...w, isActive: !w.isActive} : w
-                                                        ))}
+                                                        onClick={() => toggleWorkerStatusProtected(worker.id)}
+                                                        className="relative"
                                                     >
                                                         {worker.isActive ? 'Deactivate' : 'Activate'}
+                                                        {hasPassword && !isAuthenticated && (
+                                                            <Shield className="w-3 h-3 ml-1 text-gray-400" />
+                                                        )}
                                                     </Button>
                                                     <Button
                                                         variant="danger"
                                                         size="sm"
                                                         onClick={() => setConfirmDelete({ type: 'worker', id: worker.id, name: worker.name })}
+                                                        className="relative"
                                                     >
                                                         <Trash className="w-4 h-4" />
                                                         Remove
+                                                        {hasPassword && !isAuthenticated && (
+                                                            <Shield className="w-3 h-3 ml-1 text-white/70" />
+                                                        )}
                                                     </Button>
                                                 </div>
                                             </div>
@@ -2232,6 +3160,12 @@ Usage: Open directly in any modern web browser
             const SettingsView = memo(() => {
                 const [localSettings, setLocalSettings] = useState(settings);
                 const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+                const [storageInfo, setStorageInfo] = useState(null);
+
+                useEffect(() => {
+                    const info = safeLocalStorage.getStorageInfo();
+                    setStorageInfo(info);
+                }, []);
 
                 const updateLocalSetting = useCallback((key, value) => {
                     setLocalSettings(prev => ({ ...prev, [key]: value }));
@@ -2239,15 +3173,50 @@ Usage: Open directly in any modern web browser
                 }, []);
 
                 const saveSettings = useCallback(() => {
-                    setSettings(localSettings);
-                    setHasUnsavedChanges(false);
-                    addNotification('success', 'Settings Saved', 'Your settings have been updated successfully');
+                    const result = setSettings(localSettings);
+                    if (result.success) {
+                        setHasUnsavedChanges(false);
+                        addNotification('success', 'Settings Saved', 'Your settings have been updated successfully');
+                    } else {
+                        addNotification('error', 'Save Failed', result.error || 'Failed to save settings');
+                    }
                 }, [localSettings]);
 
                 const resetSettings = useCallback(() => {
                     setLocalSettings(settings);
                     setHasUnsavedChanges(false);
                 }, []);
+
+                const runDataIntegrityCheck = useCallback(() => {
+                    let issues = [];
+                    
+                    // Check for orphaned activities
+                    const orphanedActivities = activities.filter(a => !workers.find(w => w.id == a.workerId));
+                    if (orphanedActivities.length > 0) {
+                        issues.push(`${orphanedActivities.length} activities reference missing workers`);
+                    }
+                    
+                    // Check for invalid data
+                    const invalidActivities = activities.filter(a => 
+                        !a.title || !a.duration || isNaN(a.amount) || !a.date
+                    );
+                    if (invalidActivities.length > 0) {
+                        issues.push(`${invalidActivities.length} activities have invalid data`);
+                    }
+                    
+                    // Check for duplicate invoice numbers
+                    const invoiceNumbers = activities.map(a => a.invoiceNumber).filter(Boolean);
+                    const duplicateInvoices = invoiceNumbers.length !== new Set(invoiceNumbers).size;
+                    if (duplicateInvoices) {
+                        issues.push('Duplicate invoice numbers detected');
+                    }
+                    
+                    if (issues.length === 0) {
+                        addNotification('success', 'Data Check Complete', 'No issues found with your data');
+                    } else {
+                        addNotification('warning', 'Data Issues Found', issues.join(', '));
+                    }
+                }, [activities, workers, addNotification]);
 
                 return (
                     <div className="space-y-8">
@@ -2268,6 +3237,21 @@ Usage: Open directly in any modern web browser
                             </div>
                         )}
 
+                        {storageInfo?.isNearLimit && (
+                            <div className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-2xl p-4 card-shadow">
+                                <div className="flex items-center gap-3">
+                                    <AlertCircle className="w-5 h-5 text-red-600" />
+                                    <div>
+                                        <span className="font-medium text-red-800">Storage Warning</span>
+                                        <p className="text-sm text-red-700 mt-1">
+                                            Your browser storage is {(storageInfo.usagePercent * 100).toFixed(1)}% full. 
+                                            Consider exporting and clearing old data.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         <Card>
                             <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
                                 <Settings className="w-6 h-6 text-indigo-600" />
@@ -2280,6 +3264,7 @@ Usage: Open directly in any modern web browser
                                     onChange={(e) => updateLocalSetting('businessName', e.target.value)}
                                     placeholder="Your Business Name"
                                     tooltip="This appears on invoices and reports"
+                                    maxLength={100}
                                 />
                                 <FormInput
                                     label="Tax Rate (%)"
@@ -2292,6 +3277,88 @@ Usage: Open directly in any modern web browser
                                     placeholder="0.00"
                                     tooltip="Default tax rate applied to all services"
                                 />
+                            </div>
+                        </Card>
+
+                        <Card>
+                            <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
+                                <Shield className="w-6 h-6 text-indigo-600" />
+                                Security Settings
+                            </h3>
+                            
+                            <div className="space-y-6">
+                                {!hasPassword ? (
+                                    <div className="bg-yellow-50 rounded-xl p-6 border border-yellow-200">
+                                        <div className="flex items-start gap-4">
+                                            <AlertCircle className="w-6 h-6 text-yellow-600 mt-1" />
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-yellow-900 mb-2">No Password Protection</h4>
+                                                <p className="text-yellow-800 text-sm mb-4">
+                                                    Worker management functions are currently unprotected. Set up a password to secure adding, editing, and removing workers.
+                                                </p>
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    onClick={() => setShowPasswordSetup(true)}
+                                                >
+                                                    Setup Password Protection
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-green-50 rounded-xl p-6 border border-green-200">
+                                        <div className="flex items-start gap-4">
+                                            <CheckCircle className="w-6 h-6 text-green-600 mt-1" />
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-green-900 mb-2">Password Protection Active</h4>
+                                                <p className="text-green-800 text-sm mb-4">
+                                                    Worker management functions are protected. You'll be prompted for authentication when needed.
+                                                </p>
+                                                <div className="flex gap-3">
+                                                    <Button
+                                                        variant="secondary"
+                                                        size="sm"
+                                                        onClick={() => setShowPasswordChange(true)}
+                                                    >
+                                                        Change Password
+                                                    </Button>
+                                                    {isAuthenticated && (
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            onClick={logout}
+                                                        >
+                                                            Logout Now
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {hasPassword && (
+                                    <div className="bg-blue-50 rounded-xl p-4">
+                                        <h4 className="font-semibold text-blue-900 mb-3">Security Status</h4>
+                                        <div className="grid grid-cols-2 gap-4 text-sm">
+                                            <div>
+                                                <span className="text-blue-700">Current Status:</span>
+                                                <span className={`ml-2 font-medium ${isAuthenticated ? 'text-green-700' : 'text-amber-700'}`}>
+                                                    {isAuthenticated ? 'Authenticated' : 'Logged Out'}
+                                                </span>
+                                            </div>
+                                            {isAuthenticated && sessionExpiry && (
+                                                <div>
+                                                    <span className="text-blue-700">Session Expires:</span>
+                                                    <span className="ml-2 font-medium text-blue-900">
+                                                        {new Date(sessionExpiry).toLocaleTimeString()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </Card>
 
@@ -2325,6 +3392,55 @@ Usage: Open directly in any modern web browser
                                     <Printer className="w-6 h-6" />
                                     Print Report
                                 </Button>
+                            </div>
+                        </Card>
+
+                        <Card>
+                            <h3 className="text-2xl mobile-text-sm font-bold text-gray-900 mb-6 mobile-gap-2 flex items-center gap-3">
+                                <AlertCircle className="w-6 h-6 text-indigo-600" />
+                                System Health
+                            </h3>
+                            
+                            {storageInfo && (
+                                <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                                    <h4 className="font-semibold text-gray-900 mb-3">Storage Usage</h4>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex-1 bg-gray-200 rounded-full h-3">
+                                            <div 
+                                                className={`h-3 rounded-full transition-all ${
+                                                    storageInfo.usagePercent > 0.8 ? 'bg-red-500' 
+                                                    : storageInfo.usagePercent > 0.6 ? 'bg-yellow-500' 
+                                                    : 'bg-green-500'
+                                                }`}
+                                                style={{ width: `${Math.min(storageInfo.usagePercent * 100, 100)}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-sm font-medium text-gray-700">
+                                            {(storageInfo.usagePercent * 100).toFixed(1)}%
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-gray-600 mt-2">
+                                        Using {(storageInfo.totalSize / 1024).toFixed(1)} KB of storage
+                                    </p>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <Button
+                                    variant="secondary"
+                                    onClick={runDataIntegrityCheck}
+                                    className="flex items-center gap-2"
+                                >
+                                    <CheckCircle className="w-4 h-4" />
+                                    Check Data Integrity
+                                </Button>
+                                
+                                <div className="text-sm text-gray-600">
+                                    <p><strong>Version:</strong> {APP_CONFIG.VERSION}</p>
+                                    <p><strong>Activities:</strong> {activities.length}</p>
+                                    <p><strong>Workers:</strong> {workers.length}</p>
+                                    <p><strong>Auto-backup:</strong> {settings.autoBackup ? 'Enabled' : 'Disabled'}</p>
+                                </div>
                             </div>
                         </Card>
                     </div>
@@ -2381,10 +3497,41 @@ Usage: Open directly in any modern web browser
                                             </div>
                                         )}
 
+                                        {hasPassword && (
+                                            <div className={`rounded-2xl px-4 py-3 card-shadow flex items-center gap-2 ${
+                                                isAuthenticated 
+                                                    ? 'bg-gradient-to-r from-green-100 to-emerald-100 border border-green-200' 
+                                                    : 'bg-gradient-to-r from-gray-100 to-gray-200 border border-gray-300'
+                                            }`}>
+                                                <Shield className={`w-4 h-4 ${isAuthenticated ? 'text-green-600' : 'text-gray-600'}`} />
+                                                <span className={`text-sm font-medium ${isAuthenticated ? 'text-green-800' : 'text-gray-700'}`}>
+                                                    {isAuthenticated ? 'Authenticated' : 'Protected'}
+                                                </span>
+                                                {isAuthenticated && (
+                                                    <button
+                                                        onClick={logout}
+                                                        className="ml-2 text-xs text-green-600 hover:text-green-700 underline"
+                                                        title="Logout"
+                                                    >
+                                                        Logout
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+
                                         <div className="bg-white/70 rounded-2xl px-4 py-2 backdrop-blur-sm">
                                             <div className="text-sm text-gray-600 font-medium">Last saved</div>
                                             <div className="text-xs text-gray-500">{new Date().toLocaleTimeString()}</div>
                                         </div>
+
+                                        <button
+                                            onClick={() => setQuickAction('shortcuts')}
+                                            className="bg-white/70 rounded-2xl px-4 py-2 backdrop-blur-sm hover:bg-white/80 transition-all group"
+                                            title="Keyboard Shortcuts (Ctrl+?)"
+                                        >
+                                            <div className="text-sm text-gray-600 font-medium">Shortcuts</div>
+                                            <div className="text-xs text-gray-500">Ctrl+?</div>
+                                        </button>
                                     </div>
                                 </div>
 
@@ -2434,7 +3581,10 @@ Usage: Open directly in any modern web browser
                                             className="w-full text-left px-5 py-4 hover:bg-gray-50 rounded-xl flex items-center gap-3 font-medium transition-all focus-visible:focus"
                                         >
                                             <User className="w-5 h-5 text-blue-600" />
-                                            Add Worker
+                                            <span>Add Worker</span>
+                                            {hasPassword && !isAuthenticated && (
+                                                <Shield className="w-4 h-4 text-gray-400 ml-auto" title="Password required" />
+                                            )}
                                         </button>
                                         <button
                                             onClick={() => handleExportData('csv')}
@@ -2504,7 +3654,15 @@ Usage: Open directly in any modern web browser
                                         placeholder="e.g., Website Development & Design"
                                         value={newActivity.title}
                                         onChange={(e) => setNewActivity({...newActivity, title: e.target.value})}
+                                        error={formErrors.title}
+                                        validate={(value) => {
+                                            if (!VALIDATION_RULES.REQUIRED(value)) return 'Service title is required';
+                                            if (!VALIDATION_RULES.MAX_LENGTH(100)(value)) return 'Title must be less than 100 characters';
+                                            if (!VALIDATION_RULES.SAFE_TEXT(value)) return 'Title contains invalid characters';
+                                            return '';
+                                        }}
                                         required
+                                        maxLength={100}
                                     />
 
                                     <div>
@@ -2527,6 +3685,12 @@ Usage: Open directly in any modern web browser
                                             placeholder="8.0"
                                             value={newActivity.duration}
                                             onChange={(e) => setNewActivity({...newActivity, duration: e.target.value})}
+                                            error={formErrors.duration}
+                                            validate={(value) => {
+                                                if (!VALIDATION_RULES.REQUIRED(value)) return 'Duration is required';
+                                                if (!VALIDATION_RULES.HOURS_RANGE(value)) return 'Duration must be between 0.25 and 24 hours';
+                                                return '';
+                                            }}
                                             required
                                         />
                                         <FormInput
@@ -2537,6 +3701,12 @@ Usage: Open directly in any modern web browser
                                             placeholder="25"
                                             value={newActivity.rate}
                                             onChange={(e) => setNewActivity({...newActivity, rate: parseFloat(e.target.value) || 0})}
+                                            error={formErrors.rate}
+                                            validate={(value) => {
+                                                if (value && !VALIDATION_RULES.RATE_RANGE(value)) return 'Rate must be between $1 and $1000 per hour';
+                                                return '';
+                                            }}
+                                            tooltip="Leave empty to use worker's default rate"
                                         />
                                     </div>
 
@@ -2629,7 +3799,16 @@ Usage: Open directly in any modern web browser
                             <Modal 
                                 isOpen={true} 
                                 onClose={() => setQuickAction(null)} 
-                                title="Add New Worker"
+                                title={
+                                    <div className="flex items-center gap-3">
+                                        <span>Add New Worker</span>
+                                        {hasPassword && !isAuthenticated && (
+                                            <span className="text-sm bg-amber-100 text-amber-700 px-3 py-1 rounded-full font-normal">
+                                                Authentication Required
+                                            </span>
+                                        )}
+                                    </div>
+                                }
                             >
                                 <div className="space-y-6">
                                     <FormInput
@@ -2637,7 +3816,16 @@ Usage: Open directly in any modern web browser
                                         placeholder="e.g., Sarah Johnson"
                                         value={newWorker.name}
                                         onChange={(e) => setNewWorker({...newWorker, name: e.target.value})}
+                                        error={formErrors.name}
+                                        validate={(value) => {
+                                            if (!VALIDATION_RULES.REQUIRED(value)) return 'Name is required';
+                                            if (!VALIDATION_RULES.MIN_LENGTH(2)(value)) return 'Name must be at least 2 characters';
+                                            if (!VALIDATION_RULES.MAX_LENGTH(50)(value)) return 'Name must be less than 50 characters';
+                                            if (!VALIDATION_RULES.SAFE_TEXT(value)) return 'Name contains invalid characters';
+                                            return '';
+                                        }}
                                         required
+                                        maxLength={50}
                                     />
 
                                     <div className="grid grid-cols-2 gap-4">
@@ -2646,6 +3834,12 @@ Usage: Open directly in any modern web browser
                                             placeholder="(555) 123-4567"
                                             value={newWorker.phone}
                                             onChange={(e) => setNewWorker({...newWorker, phone: e.target.value})}
+                                            error={formErrors.phone}
+                                            validate={(value) => {
+                                                if (!VALIDATION_RULES.REQUIRED(value)) return 'Phone number is required';
+                                                if (!VALIDATION_RULES.PHONE(value)) return 'Please enter a valid phone number';
+                                                return '';
+                                            }}
                                             required
                                         />
                                         <FormInput
@@ -2654,6 +3848,11 @@ Usage: Open directly in any modern web browser
                                             placeholder="sarah@example.com"
                                             value={newWorker.email}
                                             onChange={(e) => setNewWorker({...newWorker, email: e.target.value})}
+                                            error={formErrors.email}
+                                            validate={(value) => {
+                                                if (value && !VALIDATION_RULES.EMAIL(value)) return 'Please enter a valid email address';
+                                                return '';
+                                            }}
                                         />
                                     </div>
 
@@ -2666,12 +3865,19 @@ Usage: Open directly in any modern web browser
                                             placeholder="25"
                                             value={newWorker.defaultRate}
                                             onChange={(e) => setNewWorker({...newWorker, defaultRate: e.target.value})}
+                                            error={formErrors.defaultRate}
+                                            validate={(value) => {
+                                                if (value && !VALIDATION_RULES.RATE_RANGE(value)) return 'Rate must be between $1 and $1000 per hour';
+                                                return '';
+                                            }}
                                         />
                                         <FormInput
                                             label="Skills (comma separated)"
                                             placeholder="Cleaning, Repairs, Assembly"
                                             value={newWorker.skills}
                                             onChange={(e) => setNewWorker({...newWorker, skills: e.target.value})}
+                                            maxLength={200}
+                                            tooltip="Enter skills separated by commas"
                                         />
                                     </div>
 
@@ -2688,13 +3894,16 @@ Usage: Open directly in any modern web browser
 
                                 <div className="flex gap-4 mt-8">
                                     <Button
-                                        onClick={addWorker}
+                                        onClick={addWorkerProtected}
                                         disabled={isLoading || !newWorker.name || !newWorker.phone}
                                         loading={isLoading}
-                                        className="flex-1"
+                                        className="flex-1 relative"
                                     >
                                         <Save className="w-5 h-5" />
                                         {isLoading ? 'Adding...' : 'Add Worker'}
+                                        {hasPassword && !isAuthenticated && (
+                                            <Shield className="w-4 h-4 ml-2 text-white/70" />
+                                        )}
                                     </Button>
                                     <Button
                                         variant="secondary"
@@ -2905,13 +4114,16 @@ Usage: Open directly in any modern web browser
 
                                 <div className="flex gap-4 mt-8">
                                     <Button
-                                        onClick={updateWorker}
+                                        onClick={updateWorkerProtected}
                                         disabled={isLoading || !editingWorker.name || !editingWorker.phone}
                                         loading={isLoading}
-                                        className="flex-1"
+                                        className="flex-1 relative"
                                     >
                                         <Save className="w-5 h-5" />
                                         {isLoading ? 'Updating...' : 'Update Worker'}
+                                        {hasPassword && !isAuthenticated && (
+                                            <Shield className="w-4 h-4 ml-2 text-white/70" />
+                                        )}
                                     </Button>
                                     <Button
                                         variant="secondary"
@@ -2919,6 +4131,83 @@ Usage: Open directly in any modern web browser
                                         className="flex-1"
                                     >
                                         Cancel
+                                    </Button>
+                                </div>
+                            </Modal>
+                        )}
+
+                        {/* Keyboard Shortcuts Modal */}
+                        {quickAction === 'shortcuts' && (
+                            <Modal 
+                                isOpen={true} 
+                                onClose={() => setQuickAction(null)} 
+                                title="Keyboard Shortcuts"
+                                size="md"
+                            >
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <div className="bg-gray-50 rounded-xl p-4">
+                                            <h4 className="font-semibold text-gray-900 mb-3">General Actions</h4>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span>New Work Session</span>
+                                                    <kbd className="bg-white px-2 py-1 rounded border font-mono">Ctrl+N</kbd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Add Worker</span>
+                                                    <kbd className="bg-white px-2 py-1 rounded border font-mono">Ctrl+U</kbd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Export Data</span>
+                                                    <kbd className="bg-white px-2 py-1 rounded border font-mono">Ctrl+E</kbd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Close Modal</span>
+                                                    <kbd className="bg-white px-2 py-1 rounded border font-mono">Esc</kbd>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-gray-50 rounded-xl p-4">
+                                            <h4 className="font-semibold text-gray-900 mb-3">Navigation</h4>
+                                            <div className="space-y-2 text-sm">
+                                                <div className="flex justify-between">
+                                                    <span>Timeline View</span>
+                                                    <kbd className="bg-white px-2 py-1 rounded border font-mono">Ctrl+1</kbd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Analytics View</span>
+                                                    <kbd className="bg-white px-2 py-1 rounded border font-mono">Ctrl+2</kbd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Workers View</span>
+                                                    <kbd className="bg-white px-2 py-1 rounded border font-mono">Ctrl+3</kbd>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Settings View</span>
+                                                    <kbd className="bg-white px-2 py-1 rounded border font-mono">Ctrl+4</kbd>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-blue-50 rounded-xl p-4">
+                                            <h4 className="font-semibold text-blue-900 mb-3">Pro Tips</h4>
+                                            <div className="space-y-2 text-sm text-blue-800">
+                                                <p>• Forms auto-save as drafts while you type</p>
+                                                <p>• Use Tab to navigate between form fields</p>
+                                                <p>• Press Enter in custom payment method to save</p>
+                                                <p>• Data is automatically backed up every 5 minutes</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-center mt-8">
+                                    <Button
+                                        variant="secondary"
+                                        onClick={() => setQuickAction(null)}
+                                    >
+                                        Got it!
                                     </Button>
                                 </div>
                             </Modal>
@@ -2951,15 +4240,18 @@ Usage: Open directly in any modern web browser
                                             variant="danger"
                                             onClick={() => {
                                                 if (confirmDelete.type === 'worker') {
-                                                    deleteWorker(confirmDelete.id);
+                                                    deleteWorkerProtected(confirmDelete.id);
                                                 } else {
                                                     deleteActivity(confirmDelete.id);
                                                 }
                                             }}
-                                            className="flex-1"
+                                            className="flex-1 relative"
                                         >
                                             <Trash className="w-4 h-4" />
                                             Delete
+                                            {confirmDelete.type === 'worker' && hasPassword && !isAuthenticated && (
+                                                <Shield className="w-4 h-4 ml-2 text-white/70" />
+                                            )}
                                         </Button>
                                         <Button
                                             variant="secondary"
@@ -2972,6 +4264,31 @@ Usage: Open directly in any modern web browser
                                 </div>
                             </Modal>
                         )}
+
+                        {/* Password Setup Modal */}
+                        <PasswordSetupModal
+                            isOpen={showPasswordSetup}
+                            onClose={() => setShowPasswordSetup(false)}
+                            onSetup={handlePasswordSetup}
+                        />
+
+                        {/* Password Authentication Modal */}
+                        <PasswordAuthModal
+                            isOpen={showPasswordAuth}
+                            onClose={() => {
+                                setShowPasswordAuth(false);
+                                setPendingOperation(null);
+                            }}
+                            onAuthenticate={handlePasswordAuth}
+                            operation={pendingOperation?.operationName || 'access protected features'}
+                        />
+
+                        {/* Password Change Modal */}
+                        <PasswordChangeModal
+                            isOpen={showPasswordChange}
+                            onClose={() => setShowPasswordChange(false)}
+                            onChangePassword={handlePasswordChange}
+                        />
                     </div>
                 </ErrorBoundary>
             );
